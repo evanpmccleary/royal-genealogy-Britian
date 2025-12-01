@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>British Royal Family Tree - Interactive Genealogy</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #container {
+            display: flex;
+            height: 100vh;
+        }
+
+        #sidebar {
+            width: 350px;
+            background: rgba(26, 26, 46, 0.95);
+            border-right: 2px solid #4a4a6a;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #header {
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #daa520;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #a0a0a0;
+            margin-bottom: 20px;
+        }
+
+        #search-box {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #4a4a6a;
+            border-radius: 5px;
+            color: #e0e0e0;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        #dynasty-filters {
+            margin-bottom: 20px;
+        }
+
+        .filter-title {
+            font-size: 16px;
+            color: #daa520;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .dynasty-btn {
+            display: inline-block;
+            margin: 5px 5px 5px 0;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .dynasty-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .dynasty-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+        }
+
+        #info-panel {
+            background: rgba(42, 42, 62, 0.9);
+            border: 1px solid #4a4a6a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .info-section {
+            margin-bottom: 15px;
+        }
+
+        .info-section h3 {
+            font-size: 16px;
+            color: #daa520;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #4a4a6a;
+            padding-bottom: 4px;
+        }
+
+        .info-name {
+            font-size: 20px;
+            color: #daa520;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .info-house {
+            font-size: 14px;
+            color: #a0a0a0;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            margin: 5px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .clickable-link {
+            color: #6ba3ff;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+
+        .clickable-link:hover {
+            color: #4a8fff;
+        }
+
+        .extinct-marker {
+            color: #ff6b6b;
+            font-style: italic;
+        }
+
+        .title-entry {
+            padding: 5px 0;
+            border-left: 3px solid #daa520;
+            padding-left: 10px;
+            margin: 5px 0;
+        }
+
+        #graph-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .node rect {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .node:hover rect {
+            stroke-width: 4px;
+            filter: brightness(1.2);
+        }
+
+        .node text {
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
+
+        .link {
+            fill: none;
+            stroke: rgba(150, 150, 170, 0.4);
+            stroke-width: 2px;
+        }
+
+        .link-marriage {
+            fill: none;
+            stroke: rgba(255, 170, 0, 0.6);
+            stroke-width: 2px;
+            stroke-dasharray: 5, 5;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 46, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #4a4a6a;
+        }
+
+        .control-btn {
+            display: block;
+            width: 120px;
+            margin: 5px 0;
+            padding: 8px;
+            background: rgba(218, 165, 32, 0.2);
+            border: 1px solid #daa520;
+            border-radius: 4px;
+            color: #daa520;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(218, 165, 32, 0.4);
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(26, 26, 46, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #4a4a6a;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 10px;
+            border: 1px solid #fff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(218, 165, 32, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(218, 165, 32, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="sidebar">
+            <div id="header">
+                <h1>British Royal Family Tree</h1>
+                <div class="subtitle">Interactive Genealogical Network • 519 AD - Present</div>
+            </div>
+
+            <input type="text" id="search-box" placeholder="Search by name..." />
+
+            <div id="dynasty-filters">
+                <div class="filter-title">Filter by Dynasty</div>
+                <div id="dynasty-buttons"></div>
+            </div>
+
+            <div id="info-panel">
+                <div style="text-align: center; color: #a0a0a0; padding: 40px 20px;">
+                    Click on any person to see their complete family information.
+                </div>
+            </div>
+        </div>
+
+        <div id="graph-container">
+            <div class="controls">
+                <button class="control-btn" onclick="resetZoom()">Reset View</button>
+                <button class="control-btn" onclick="centerGraph()">Center Graph</button>
+                <button class="control-btn" onclick="expandAll()">Expand All</button>
+            </div>
+
+            <div class="legend">
+                <div class="filter-title" style="margin-bottom: 10px;">Dynasty Colors</div>
+                <div id="legend-content"></div>
+            </div>
+
+            <svg id="graph"></svg>
+        </div>
+    </div>
+
+    <script>
+        // Complete British Royal Family Dataset
+        const royalData = {
+            people: [
+                // HOUSE OF WESSEX (519-1066)
+                {
+                    id: "cerdic",
+                    name: "Cerdic of Wessex",
+                    house: "Wessex",
+                    born: "c. 467",
+                    died: "534",
+                    titles: [{title: "King of Wessex", from: "519", to: "534"}],
+                    father: null,
+                    mother: null,
+                    spouses: [{id: "unknown_cerdic_wife", name: "Unknown", house: "Unknown"}],
+                    children: ["cynric"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Cerdic_of_Wessex",
+                    notes: "Founder of the Kingdom of Wessex"
+                },
+                {
+                    id: "cynric",
+                    name: "Cynric of Wessex",
+                    house: "Wessex",
+                    born: "c. 495",
+                    died: "560",
+                    titles: [{title: "King of Wessex", from: "534", to: "560"}],
+                    father: "cerdic",
+                    spouses: [{id: "unknown_cynric_wife", name: "Unknown", house: "Unknown"}],
+                    children: ["ceawlin"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Cynric"
+                },
+                {
+                    id: "alfred_the_great",
+                    name: "Alfred the Great",
+                    house: "Wessex",
+                    born: "847",
+                    died: "899",
+                    titles: [
+                        {title: "King of the West Saxons", from: "871", to: "886"},
+                        {title: "King of the Anglo-Saxons", from: "886", to: "899"}
+                    ],
+                    father: "aethelwulf",
+                    mother: "osburh",
+                    spouses: [{id: "ealhswith", name: "Ealhswith", house: "Mercia"}],
+                    children: ["aethelflaed", "edward_the_elder", "aethelgifu", "aelfthryth", "aethelweard"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Alfred_the_Great",
+                    notes: "Defeated the Vikings, promoted literacy, commissioned Anglo-Saxon Chronicle"
+                },
+                {
+                    id: "ealhswith",
+                    name: "Ealhswith",
+                    house: "Mercia",
+                    died: "902",
+                    titles: [{title: "Queen consort of Wessex", from: "871", to: "899"}],
+                    father: "aethelred_mucel",
+                    spouses: [{id: "alfred_the_great", name: "Alfred the Great", house: "Wessex"}],
+                    wikipedia: "https://en.wikipedia.org/wiki/Ealhswith",
+                    isSpouse: true
+                },
+                {
+                    id: "edward_the_elder",
+                    name: "Edward the Elder",
+                    house: "Wessex",
+                    born: "c. 874",
+                    died: "924",
+                    titles: [{title: "King of the Anglo-Saxons", from: "899", to: "924"}],
+                    father: "alfred_the_great",
+                    mother: "ealhswith",
+                    spouses: [
+                        {id: "ecgwynn", name: "Ecgwynn", house: "Unknown"},
+                        {id: "aelfflaed", name: "Ælfflæd", house: "Unknown"},
+                        {id: "eadgifu", name: "Eadgifu of Kent", house: "Kent"}
+                    ],
+                    children: ["athelstan", "edmund_i", "eadred", "eadgifu_daughter"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_the_Elder"
+                },
+                {
+                    id: "athelstan",
+                    name: "Æthelstan",
+                    house: "Wessex",
+                    born: "c. 894",
+                    died: "939",
+                    titles: [{title: "King of the English", from: "927", to: "939"}],
+                    father: "edward_the_elder",
+                    mother: "ecgwynn",
+                    spouses: [],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/%C3%86thelstan",
+                    notes: "First King of all England. Died unmarried, no children.",
+                    extinct: true
+                },
+                {
+                    id: "edmund_i",
+                    name: "Edmund I",
+                    house: "Wessex",
+                    born: "921",
+                    died: "946",
+                    titles: [{title: "King of the English", from: "939", to: "946"}],
+                    father: "edward_the_elder",
+                    mother: "eadgifu",
+                    spouses: [
+                        {id: "aelfgifu_shaftesbury", name: "Ælfgifu of Shaftesbury", house: "Unknown"},
+                        {id: "aethelflaed_damerham", name: "Æthelflæd of Damerham", house: "Unknown"}
+                    ],
+                    children: ["eadwig", "edgar_the_peaceful"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edmund_I"
+                },
+                {
+                    id: "eadred",
+                    name: "Eadred",
+                    house: "Wessex",
+                    born: "c. 923",
+                    died: "955",
+                    titles: [{title: "King of the English", from: "946", to: "955"}],
+                    father: "edward_the_elder",
+                    mother: "eadgifu",
+                    spouses: [],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Eadred",
+                    notes: "Died unmarried, no children.",
+                    extinct: true
+                },
+                {
+                    id: "eadwig",
+                    name: "Eadwig",
+                    house: "Wessex",
+                    born: "c. 940",
+                    died: "959",
+                    titles: [{title: "King of the English", from: "955", to: "959"}],
+                    father: "edmund_i",
+                    spouses: [{id: "aelfgifu_eadwig", name: "Ælfgifu", house: "Unknown"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Eadwig",
+                    notes: "Died young, no surviving children.",
+                    extinct: true
+                },
+                {
+                    id: "edgar_the_peaceful",
+                    name: "Edgar the Peaceful",
+                    house: "Wessex",
+                    born: "943",
+                    died: "975",
+                    titles: [{title: "King of the English", from: "959", to: "975"}],
+                    father: "edmund_i",
+                    spouses: [
+                        {id: "aethelflaed_eneda", name: "Æthelflæd Eneda", house: "Unknown"},
+                        {id: "aelfthryth_damerhurst", name: "Ælfthryth", house: "Unknown"}
+                    ],
+                    children: ["edward_the_martyr", "aethelred_the_unready"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edgar_the_Peaceful"
+                },
+                {
+                    id: "edward_the_martyr",
+                    name: "Edward the Martyr",
+                    house: "Wessex",
+                    born: "c. 962",
+                    died: "978",
+                    titles: [{title: "King of the English", from: "975", to: "978"}],
+                    father: "edgar_the_peaceful",
+                    spouses: [],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_the_Martyr",
+                    notes: "Murdered aged 16. No children.",
+                    extinct: true
+                },
+                {
+                    id: "aethelred_the_unready",
+                    name: "Æthelred the Unready",
+                    house: "Wessex",
+                    born: "c. 966",
+                    died: "1016",
+                    titles: [{title: "King of the English", from: "978", to: "1013"}, {title: "King of the English", from: "1014", to: "1016"}],
+                    father: "edgar_the_peaceful",
+                    mother: "aelfthryth_damerhurst",
+                    spouses: [
+                        {id: "aelfgifu_york", name: "Ælfgifu of York", house: "Northumbria"},
+                        {id: "emma_normandy", name: "Emma of Normandy", house: "Normandy"}
+                    ],
+                    children: ["edmund_ironside", "edward_the_confessor"],
+                    wikipedia: "https://en.wikipedia.org/wiki/%C3%86thelred_the_Unready"
+                },
+                {
+                    id: "emma_normandy",
+                    name: "Emma of Normandy",
+                    house: "Normandy",
+                    born: "c. 984",
+                    died: "1052",
+                    titles: [{title: "Queen consort of England", from: "1002", to: "1016"}, {title: "Queen consort of England", from: "1017", to: "1035"}],
+                    father: "richard_i_normandy",
+                    spouses: [
+                        {id: "aethelred_the_unready", name: "Æthelred the Unready", house: "Wessex"},
+                        {id: "cnut_great", name: "Cnut the Great", house: "Denmark"}
+                    ],
+                    children: ["edward_the_confessor", "harthacnut"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Emma_of_Normandy",
+                    notes: "Married Æthelred, then after his death married Cnut the Great",
+                    isSpouse: true,
+                    isPortal: true
+                },
+                {
+                    id: "edmund_ironside",
+                    name: "Edmund Ironside",
+                    house: "Wessex",
+                    born: "c. 990",
+                    died: "1016",
+                    titles: [{title: "King of the English", from: "1016", to: "1016"}],
+                    father: "aethelred_the_unready",
+                    mother: "aelfgifu_york",
+                    spouses: [{id: "ealdgyth_edmund", name: "Ealdgyth", house: "Unknown"}],
+                    children: ["edward_exile", "edmund_edmund"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edmund_Ironside",
+                    notes: "Ruled 7 months, died mysteriously"
+                },
+                {
+                    id: "edward_exile",
+                    name: "Edward the Exile",
+                    house: "Wessex",
+                    born: "1016",
+                    died: "1057",
+                    father: "edmund_ironside",
+                    spouses: [{id: "agatha_exile", name: "Agatha", house: "Unknown"}],
+                    children: ["edgar_aetheling", "margaret_scotland", "christina_wessex"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_the_Exile",
+                    notes: "Exiled to Hungary, returned to England 1057"
+                },
+                {
+                    id: "edgar_aetheling",
+                    name: "Edgar Ætheling",
+                    house: "Wessex",
+                    born: "c. 1051",
+                    died: "c. 1125",
+                    father: "edward_exile",
+                    mother: "agatha_exile",
+                    titles: [{title: "King of England (proclaimed, never crowned)", from: "1066", to: "1066"}],
+                    spouses: [],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edgar_%C3%86theling",
+                    notes: "Last male heir of House of Wessex. Proclaimed king Oct 1066 but never crowned. Traveled to Crimea/Byzantine Empire. Official history: died childless.",
+                    extinct: true,
+                    special: "RESEARCH SUBJECT"
+                },
+                {
+                    id: "margaret_scotland",
+                    name: "Margaret of Scotland",
+                    house: "Wessex",
+                    born: "c. 1045",
+                    died: "1093",
+                    father: "edward_exile",
+                    mother: "agatha_exile",
+                    spouses: [{id: "malcolm_iii", name: "Malcolm III of Scotland", house: "Dunkeld"}],
+                    children: ["david_i_scotland", "matilda_scotland", "edith_scotland"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Saint_Margaret_of_Scotland",
+                    notes: "All documented Wessex descendants trace through her. Sister of Edgar Ætheling.",
+                    isPortal: true
+                },
+                {
+                    id: "edward_the_confessor",
+                    name: "Edward the Confessor",
+                    house: "Wessex",
+                    born: "c. 1003",
+                    died: "1066",
+                    titles: [{title: "King of England", from: "1042", to: "1066"}],
+                    father: "aethelred_the_unready",
+                    mother: "emma_normandy",
+                    spouses: [{id: "edith_godwin", name: "Edith of Wessex", house: "Godwin"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_the_Confessor",
+                    notes: "Died childless. His death sparked succession crisis of 1066.",
+                    extinct: true
+                },
+
+                // HOUSE OF GODWIN (1066)
+                {
+                    id: "harold_godwinson",
+                    name: "Harold Godwinson",
+                    house: "Godwin",
+                    born: "c. 1022",
+                    died: "1066",
+                    titles: [{title: "King of England", from: "Jan 1066", to: "Oct 1066"}],
+                    father: "godwin_wessex",
+                    spouses: [
+                        {id: "edith_swannesha", name: "Edith Swannesha", house: "Unknown"},
+                        {id: "ealdgyth_mercia", name: "Ealdgyth", house: "Mercia"}
+                    ],
+                    children: ["godwine_harold", "harold_harold"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Harold_Godwinson",
+                    notes: "Killed at Battle of Hastings. Ruled 9 months."
+                },
+
+                // HOUSE OF KNÝTLINGA (Danish Dynasty, 1013-1042)
+                {
+                    id: "sweyn_forkbeard",
+                    name: "Sweyn Forkbeard",
+                    house: "Knýtlinga",
+                    born: "c. 960",
+                    died: "1014",
+                    titles: [
+                        {title: "King of Denmark", from: "986", to: "1014"},
+                        {title: "King of England", from: "1013", to: "1014"}
+                    ],
+                    spouses: [{id: "gunhild_poland", name: "Gunhild of Poland", house: "Piast"}],
+                    children: ["cnut_great", "harald_ii_denmark"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Sweyn_Forkbeard"
+                },
+                {
+                    id: "cnut_great",
+                    name: "Cnut the Great",
+                    house: "Knýtlinga",
+                    born: "c. 990",
+                    died: "1035",
+                    titles: [
+                        {title: "King of England", from: "1016", to: "1035"},
+                        {title: "King of Denmark", from: "1018", to: "1035"},
+                        {title: "King of Norway", from: "1028", to: "1035"}
+                    ],
+                    father: "sweyn_forkbeard",
+                    spouses: [
+                        {id: "aelfgifu_northampton", name: "Ælfgifu of Northampton", house: "Northumbria"},
+                        {id: "emma_normandy", name: "Emma of Normandy", house: "Normandy"}
+                    ],
+                    children: ["harold_harefoot", "harthacnut"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Cnut_the_Great",
+                    notes: "Married Emma of Normandy after Æthelred's death"
+                },
+                {
+                    id: "harold_harefoot",
+                    name: "Harold Harefoot",
+                    house: "Knýtlinga",
+                    born: "c. 1015",
+                    died: "1040",
+                    titles: [{title: "King of England", from: "1035", to: "1040"}],
+                    father: "cnut_great",
+                    mother: "aelfgifu_northampton",
+                    wikipedia: "https://en.wikipedia.org/wiki/Harold_Harefoot"
+                },
+                {
+                    id: "harthacnut",
+                    name: "Harthacnut",
+                    house: "Knýtlinga",
+                    born: "c. 1018",
+                    died: "1042",
+                    titles: [
+                        {title: "King of Denmark", from: "1035", to: "1042"},
+                        {title: "King of England", from: "1040", to: "1042"}
+                    ],
+                    father: "cnut_great",
+                    mother: "emma_normandy",
+                    wikipedia: "https://en.wikipedia.org/wiki/Harthacnut",
+                    notes: "Last Knýtlinga (Danish) king of England"
+                },
+
+                // HOUSE OF NORMANDY (1066-1135)
+                {
+                    id: "william_i",
+                    name: "William I the Conqueror",
+                    house: "Normandy",
+                    born: "c. 1028",
+                    died: "1087",
+                    titles: [
+                        {title: "Duke of Normandy", from: "1035", to: "1087"},
+                        {title: "King of England", from: "1066", to: "1087"}
+                    ],
+                    father: "robert_i_normandy",
+                    mother: "herleva",
+                    spouses: [{id: "matilda_flanders", name: "Matilda of Flanders", house: "Flanders"}],
+                    children: ["robert_curthose", "william_ii", "henry_i", "adela_normandy", "constance_brittany"],
+                    wikipedia: "https://en.wikipedia.org/wiki/William_the_Conqueror",
+                    notes: "Conquered England at Battle of Hastings 1066"
+                },
+                {
+                    id: "matilda_flanders",
+                    name: "Matilda of Flanders",
+                    house: "Flanders",
+                    born: "c. 1031",
+                    died: "1083",
+                    titles: [{title: "Queen consort of England", from: "1066", to: "1083"}],
+                    father: "baldwin_v_flanders",
+                    spouses: [{id: "william_i", name: "William I", house: "Normandy"}],
+                    wikipedia: "https://en.wikipedia.org/wiki/Matilda_of_Flanders",
+                    notes: "Daughter of Baldwin V, Count of Flanders",
+                    isSpouse: true,
+                    isPortal: true
+                },
+                {
+                    id: "robert_curthose",
+                    name: "Robert Curthose",
+                    house: "Normandy",
+                    born: "c. 1051",
+                    died: "1134",
+                    titles: [{title: "Duke of Normandy", from: "1087", to: "1106"}],
+                    father: "william_i",
+                    mother: "matilda_flanders",
+                    spouses: [{id: "sybilla_conversano", name: "Sybilla of Conversano", house: "Conversano"}],
+                    children: ["william_clito"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Robert_Curthose",
+                    notes: "Imprisoned by Henry I. Line died out with William Clito."
+                },
+                {
+                    id: "william_ii",
+                    name: "William II Rufus",
+                    house: "Normandy",
+                    born: "c. 1056",
+                    died: "1100",
+                    titles: [{title: "King of England", from: "1087", to: "1100"}],
+                    father: "william_i",
+                    mother: "matilda_flanders",
+                    spouses: [],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/William_II_of_England",
+                    notes: "Died in hunting accident. Never married, no children.",
+                    extinct: true
+                },
+                {
+                    id: "henry_i",
+                    name: "Henry I",
+                    house: "Normandy",
+                    born: "1068",
+                    died: "1135",
+                    titles: [
+                        {title: "King of England", from: "1100", to: "1135"},
+                        {title: "Duke of Normandy", from: "1106", to: "1135"}
+                    ],
+                    father: "william_i",
+                    mother: "matilda_flanders",
+                    spouses: [
+                        {id: "matilda_scotland", name: "Matilda of Scotland", house: "Dunkeld"},
+                        {id: "adeliza_louvain", name: "Adeliza of Louvain", house: "Louvain"}
+                    ],
+                    children: ["matilda_empress", "william_adelin"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Henry_I_of_England",
+                    notes: "Had 20+ illegitimate children"
+                },
+                {
+                    id: "matilda_scotland",
+                    name: "Matilda of Scotland",
+                    house: "Dunkeld",
+                    born: "c. 1080",
+                    died: "1118",
+                    father: "malcolm_iii",
+                    mother: "margaret_scotland",
+                    titles: [{title: "Queen consort of England", from: "1100", to: "1118"}],
+                    spouses: [{id: "henry_i", name: "Henry I", house: "Normandy"}],
+                    wikipedia: "https://en.wikipedia.org/wiki/Matilda_of_Scotland",
+                    notes: "Granddaughter of Margaret of Scotland - Wessex blood re-enters English line",
+                    isSpouse: true,
+                    isPortal: true
+                },
+                {
+                    id: "adela_normandy",
+                    name: "Adela of Normandy",
+                    house: "Normandy",
+                    born: "c. 1067",
+                    died: "1137",
+                    father: "william_i",
+                    mother: "matilda_flanders",
+                    spouses: [{id: "stephen_blois", name: "Stephen, Count of Blois", house: "Blois"}],
+                    children: ["stephen_england"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Adela_of_Normandy",
+                    notes: "Her son became King Stephen of England"
+                },
+                {
+                    id: "matilda_empress",
+                    name: "Matilda (Empress Maude)",
+                    house: "Normandy",
+                    born: "1102",
+                    died: "1167",
+                    father: "henry_i",
+                    mother: "matilda_scotland",
+                    titles: [{title: "Lady of the English (disputed)", from: "1141", to: "1141"}],
+                    spouses: [
+                        {id: "henry_v_hre", name: "Henry V, Holy Roman Emperor", house: "Salian"},
+                        {id: "geoffrey_anjou", name: "Geoffrey of Anjou", house: "Anjou"}
+                    ],
+                    children: ["henry_ii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Empress_Matilda",
+                    notes: "Second marriage to Geoffrey of Anjou founded Plantagenet dynasty"
+                },
+
+                // HOUSE OF BLOIS (1135-1154)
+                {
+                    id: "stephen_england",
+                    name: "Stephen",
+                    house: "Blois",
+                    born: "c. 1092",
+                    died: "1154",
+                    titles: [{title: "King of England", from: "1135", to: "1154"}],
+                    father: "stephen_blois",
+                    mother: "adela_normandy",
+                    spouses: [{id: "matilda_boulogne", name: "Matilda of Boulogne", house: "Boulogne"}],
+                    children: ["eustace_blois"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Stephen,_King_of_England",
+                    notes: "Seized throne after Henry I's death. Civil war with Matilda. Line died out."
+                },
+
+                // HOUSE OF PLANTAGENET (1154-1485)
+                {
+                    id: "henry_ii",
+                    name: "Henry II",
+                    house: "Plantagenet",
+                    born: "1133",
+                    died: "1189",
+                    titles: [
+                        {title: "King of England", from: "1154", to: "1189"},
+                        {title: "Duke of Normandy", from: "1150", to: "1189"},
+                        {title: "Duke of Aquitaine", from: "1152", to: "1189"}
+                    ],
+                    father: "geoffrey_anjou",
+                    mother: "matilda_empress",
+                    spouses: [{id: "eleanor_aquitaine", name: "Eleanor of Aquitaine", house: "Aquitaine"}],
+                    children: ["henry_young_king", "richard_i", "john_england"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Henry_II_of_England",
+                    notes: "First Plantagenet king"
+                },
+                {
+                    id: "eleanor_aquitaine",
+                    name: "Eleanor of Aquitaine",
+                    house: "Aquitaine",
+                    born: "c. 1122",
+                    died: "1204",
+                    titles: [
+                        {title: "Queen consort of France", from: "1137", to: "1152"},
+                        {title: "Queen consort of England", from: "1154", to: "1189"}
+                    ],
+                    spouses: [
+                        {id: "louis_vii_france", name: "Louis VII of France", house: "Capet"},
+                        {id: "henry_ii", name: "Henry II", house: "Plantagenet"}
+                    ],
+                    wikipedia: "https://en.wikipedia.org/wiki/Eleanor_of_Aquitaine",
+                    notes: "Previously married to Louis VII of France. One of most powerful women in medieval Europe",
+                    isSpouse: true,
+                    isPortal: true
+                },
+                {
+                    id: "richard_i",
+                    name: "Richard I the Lionheart",
+                    house: "Plantagenet",
+                    born: "1157",
+                    died: "1199",
+                    titles: [
+                        {title: "King of England", from: "1189", to: "1199"},
+                        {title: "Duke of Normandy", from: "1189", to: "1199"}
+                    ],
+                    father: "henry_ii",
+                    mother: "eleanor_aquitaine",
+                    spouses: [{id: "berengaria_navarre", name: "Berengaria of Navarre", house: "Navarre"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Richard_I_of_England",
+                    notes: "Crusader king. No legitimate children.",
+                    extinct: true
+                },
+                {
+                    id: "john_england",
+                    name: "John",
+                    house: "Plantagenet",
+                    born: "1166",
+                    died: "1216",
+                    titles: [{title: "King of England", from: "1199", to: "1216"}],
+                    father: "henry_ii",
+                    mother: "eleanor_aquitaine",
+                    spouses: [
+                        {id: "isabel_gloucester", name: "Isabel of Gloucester", house: "Gloucester"},
+                        {id: "isabella_angouleme", name: "Isabella of Angoulême", house: "Angoulême"}
+                    ],
+                    children: ["henry_iii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/John,_King_of_England",
+                    notes: "Signed Magna Carta 1215"
+                },
+                {
+                    id: "henry_iii",
+                    name: "Henry III",
+                    house: "Plantagenet",
+                    born: "1207",
+                    died: "1272",
+                    titles: [{title: "King of England", from: "1216", to: "1272"}],
+                    father: "john_england",
+                    spouses: [{id: "eleanor_provence", name: "Eleanor of Provence", house: "Provence"}],
+                    children: ["edward_i"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Henry_III_of_England"
+                },
+                {
+                    id: "edward_i",
+                    name: "Edward I Longshanks",
+                    house: "Plantagenet",
+                    born: "1239",
+                    died: "1307",
+                    titles: [{title: "King of England", from: "1272", to: "1307"}],
+                    father: "henry_iii",
+                    spouses: [
+                        {id: "eleanor_castile", name: "Eleanor of Castile", house: "Castile"},
+                        {id: "margaret_france", name: "Margaret of France", house: "Capet"}
+                    ],
+                    children: ["edward_ii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_I_of_England",
+                    notes: "Conquered Wales, attempted to conquer Scotland"
+                },
+                {
+                    id: "edward_ii",
+                    name: "Edward II",
+                    house: "Plantagenet",
+                    born: "1284",
+                    died: "1327",
+                    titles: [{title: "King of England", from: "1307", to: "1327"}],
+                    father: "edward_i",
+                    spouses: [{id: "isabella_france", name: "Isabella of France", house: "Capet"}],
+                    children: ["edward_iii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_II_of_England",
+                    notes: "Deposed and murdered 1327"
+                },
+                {
+                    id: "edward_iii",
+                    name: "Edward III",
+                    house: "Plantagenet",
+                    born: "1312",
+                    died: "1377",
+                    titles: [{title: "King of England", from: "1327", to: "1377"}],
+                    father: "edward_ii",
+                    mother: "isabella_france",
+                    spouses: [{id: "philippa_hainault", name: "Philippa of Hainault", house: "Hainault"}],
+                    children: ["edward_black_prince", "lionel_antwerp", "john_gaunt", "edmund_langley"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_III_of_England",
+                    notes: "Started Hundred Years' War. His sons founded Lancaster and York branches."
+                },
+                {
+                    id: "edward_black_prince",
+                    name: "Edward the Black Prince",
+                    house: "Plantagenet",
+                    born: "1330",
+                    died: "1376",
+                    titles: [{title: "Prince of Wales", from: "1343", to: "1376"}],
+                    father: "edward_iii",
+                    spouses: [{id: "joan_kent", name: "Joan of Kent", house: "Plantagenet"}],
+                    children: ["richard_ii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_the_Black_Prince",
+                    notes: "Predeceased his father. Never became king."
+                },
+                {
+                    id: "richard_ii",
+                    name: "Richard II",
+                    house: "Plantagenet",
+                    born: "1367",
+                    died: "1400",
+                    titles: [{title: "King of England", from: "1377", to: "1399"}],
+                    father: "edward_black_prince",
+                    spouses: [
+                        {id: "anne_bohemia", name: "Anne of Bohemia", house: "Luxembourg"},
+                        {id: "isabella_valois", name: "Isabella of Valois", house: "Valois"}
+                    ],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Richard_II_of_England",
+                    notes: "Deposed by Henry Bolingbroke. Died childless.",
+                    extinct: true
+                },
+
+                // HOUSE OF LANCASTER (1399-1471)
+                {
+                    id: "john_gaunt",
+                    name: "John of Gaunt",
+                    house: "Lancaster",
+                    born: "1340",
+                    died: "1399",
+                    titles: [{title: "Duke of Lancaster", from: "1362", to: "1399"}],
+                    father: "edward_iii",
+                    mother: "philippa_hainault",
+                    spouses: [
+                        {id: "blanche_lancaster", name: "Blanche of Lancaster", house: "Lancaster"},
+                        {id: "constance_castile", name: "Constance of Castile", house: "Castile"},
+                        {id: "katherine_swynford", name: "Katherine Swynford", house: "Roet"}
+                    ],
+                    children: ["henry_iv"],
+                    wikipedia: "https://en.wikipedia.org/wiki/John_of_Gaunt",
+                    notes: "Founded Lancaster branch. Father of Henry IV."
+                },
+                {
+                    id: "henry_iv",
+                    name: "Henry IV Bolingbroke",
+                    house: "Lancaster",
+                    born: "1367",
+                    died: "1413",
+                    titles: [{title: "King of England", from: "1399", to: "1413"}],
+                    father: "john_gaunt",
+                    mother: "blanche_lancaster",
+                    spouses: [
+                        {id: "mary_bohun", name: "Mary de Bohun", house: "Bohun"},
+                        {id: "joan_navarre", name: "Joan of Navarre", house: "Navarre"}
+                    ],
+                    children: ["henry_v"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Henry_IV_of_England",
+                    notes: "Deposed Richard II"
+                },
+                {
+                    id: "henry_v",
+                    name: "Henry V",
+                    house: "Lancaster",
+                    born: "1386",
+                    died: "1422",
+                    titles: [{title: "King of England", from: "1413", to: "1422"}],
+                    father: "henry_iv",
+                    mother: "mary_bohun",
+                    spouses: [{id: "catherine_valois", name: "Catherine of Valois", house: "Valois"}],
+                    children: ["henry_vi"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Henry_V_of_England",
+                    notes: "Victory at Agincourt 1415"
+                },
+                {
+                    id: "catherine_valois",
+                    name: "Catherine of Valois",
+                    house: "Valois",
+                    born: "1401",
+                    died: "1437",
+                    titles: [{title: "Queen consort of England", from: "1420", to: "1422"}],
+                    spouses: [
+                        {id: "henry_v", name: "Henry V", house: "Lancaster"},
+                        {id: "owen_tudor", name: "Owen Tudor", house: "Tudor"}
+                    ],
+                    children: ["henry_vi", "edmund_tudor"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Catherine_of_Valois",
+                    notes: "Her second marriage to Owen Tudor founded Tudor dynasty",
+                    isSpouse: true,
+                    isPortal: true
+                },
+                {
+                    id: "henry_vi",
+                    name: "Henry VI",
+                    house: "Lancaster",
+                    born: "1421",
+                    died: "1471",
+                    titles: [
+                        {title: "King of England", from: "1422", to: "1461"},
+                        {title: "King of England", from: "1470", to: "1471"}
+                    ],
+                    father: "henry_v",
+                    mother: "catherine_valois",
+                    spouses: [{id: "margaret_anjou", name: "Margaret of Anjou", house: "Anjou"}],
+                    children: ["edward_westminster"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Henry_VI_of_England",
+                    notes: "Wars of the Roses. Deposed twice, murdered in Tower."
+                },
+
+                // HOUSE OF YORK (1461-1485)
+                {
+                    id: "edmund_langley",
+                    name: "Edmund of Langley",
+                    house: "York",
+                    born: "1341",
+                    died: "1402",
+                    titles: [{title: "Duke of York", from: "1385", to: "1402"}],
+                    father: "edward_iii",
+                    mother: "philippa_hainault",
+                    spouses: [{id: "isabella_castile_york", name: "Isabella of Castile", house: "Castile"}],
+                    children: ["richard_cambridge"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edmund_of_Langley,_1st_Duke_of_York",
+                    notes: "Founded York branch"
+                },
+                {
+                    id: "edward_iv",
+                    name: "Edward IV",
+                    house: "York",
+                    born: "1442",
+                    died: "1483",
+                    titles: [
+                        {title: "King of England", from: "1461", to: "1470"},
+                        {title: "King of England", from: "1471", to: "1483"}
+                    ],
+                    spouses: [{id: "elizabeth_woodville", name: "Elizabeth Woodville", house: "Woodville"}],
+                    children: ["edward_v", "richard_shrewsbury"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_IV_of_England",
+                    notes: "First Yorkist king"
+                },
+                {
+                    id: "edward_v",
+                    name: "Edward V",
+                    house: "York",
+                    born: "1470",
+                    died: "c. 1483",
+                    titles: [{title: "King of England", from: "Apr 1483", to: "Jun 1483"}],
+                    father: "edward_iv",
+                    spouses: [],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_V_of_England",
+                    notes: "One of the Princes in the Tower. Ruled 78 days, aged 12. Presumed murdered.",
+                    extinct: true
+                },
+                {
+                    id: "richard_iii",
+                    name: "Richard III",
+                    house: "York",
+                    born: "1452",
+                    died: "1485",
+                    titles: [{title: "King of England", from: "1483", to: "1485"}],
+                    spouses: [{id: "anne_neville", name: "Anne Neville", house: "Neville"}],
+                    children: ["edward_middleham"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Richard_III_of_England",
+                    notes: "Killed at Bosworth Field. Last Plantagenet king.",
+                    extinct: true
+                },
+
+                // HOUSE OF TUDOR (1485-1603)
+                {
+                    id: "edmund_tudor",
+                    name: "Edmund Tudor",
+                    house: "Tudor",
+                    born: "c. 1430",
+                    died: "1456",
+                    titles: [{title: "Earl of Richmond", from: "1452", to: "1456"}],
+                    father: "owen_tudor",
+                    mother: "catherine_valois",
+                    spouses: [{id: "margaret_beaufort", name: "Margaret Beaufort", house: "Beaufort"}],
+                    children: ["henry_vii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edmund_Tudor,_1st_Earl_of_Richmond"
+                },
+                {
+                    id: "henry_vii",
+                    name: "Henry VII",
+                    house: "Tudor",
+                    born: "1457",
+                    died: "1509",
+                    titles: [{title: "King of England", from: "1485", to: "1509"}],
+                    father: "edmund_tudor",
+                    mother: "margaret_beaufort",
+                    spouses: [{id: "elizabeth_york", name: "Elizabeth of York", house: "York"}],
+                    children: ["henry_viii", "margaret_tudor"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Henry_VII_of_England",
+                    notes: "Defeated Richard III at Bosworth. United Lancaster and York."
+                },
+                {
+                    id: "elizabeth_york",
+                    name: "Elizabeth of York",
+                    house: "York",
+                    born: "1466",
+                    died: "1503",
+                    titles: [{title: "Queen consort of England", from: "1486", to: "1503"}],
+                    father: "edward_iv",
+                    mother: "elizabeth_woodville",
+                    spouses: [{id: "henry_vii", name: "Henry VII", house: "Tudor"}],
+                    wikipedia: "https://en.wikipedia.org/wiki/Elizabeth_of_York",
+                    notes: "United York and Lancaster claims through marriage",
+                    isSpouse: true
+                },
+                {
+                    id: "henry_viii",
+                    name: "Henry VIII",
+                    house: "Tudor",
+                    born: "1491",
+                    died: "1547",
+                    titles: [{title: "King of England", from: "1509", to: "1547"}],
+                    father: "henry_vii",
+                    mother: "elizabeth_york",
+                    spouses: [
+                        {id: "catherine_aragon", name: "Catherine of Aragon", house: "Trastámara"},
+                        {id: "anne_boleyn", name: "Anne Boleyn", house: "Boleyn"},
+                        {id: "jane_seymour", name: "Jane Seymour", house: "Seymour"},
+                        {id: "anne_cleves", name: "Anne of Cleves", house: "La Marck"},
+                        {id: "catherine_howard", name: "Catherine Howard", house: "Howard"},
+                        {id: "catherine_parr", name: "Catherine Parr", house: "Parr"}
+                    ],
+                    children: ["mary_i", "elizabeth_i", "edward_vi"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Henry_VIII_of_England",
+                    notes: "Six wives. Break with Rome. Established Church of England."
+                },
+                {
+                    id: "edward_vi",
+                    name: "Edward VI",
+                    house: "Tudor",
+                    born: "1537",
+                    died: "1553",
+                    titles: [{title: "King of England", from: "1547", to: "1553"}],
+                    father: "henry_viii",
+                    mother: "jane_seymour",
+                    spouses: [],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_VI_of_England",
+                    notes: "Died aged 15. Never married.",
+                    extinct: true
+                },
+                {
+                    id: "mary_i",
+                    name: "Mary I",
+                    house: "Tudor",
+                    born: "1516",
+                    died: "1558",
+                    titles: [{title: "Queen of England", from: "1553", to: "1558"}],
+                    father: "henry_viii",
+                    mother: "catherine_aragon",
+                    spouses: [{id: "philip_ii_spain", name: "Philip II of Spain", house: "Habsburg"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Mary_I_of_England",
+                    notes: "Bloody Mary. Attempted to restore Catholicism. Died childless.",
+                    extinct: true
+                },
+                {
+                    id: "elizabeth_i",
+                    name: "Elizabeth I",
+                    house: "Tudor",
+                    born: "1533",
+                    died: "1603",
+                    titles: [{title: "Queen of England", from: "1558", to: "1603"}],
+                    father: "henry_viii",
+                    mother: "anne_boleyn",
+                    spouses: [],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Elizabeth_I_of_England",
+                    notes: "The Virgin Queen. Golden Age of England. Never married. Tudor line ended.",
+                    extinct: true
+                },
+
+                // HOUSE OF STUART (1603-1714)
+                {
+                    id: "margaret_tudor",
+                    name: "Margaret Tudor",
+                    house: "Tudor",
+                    born: "1489",
+                    died: "1541",
+                    father: "henry_vii",
+                    mother: "elizabeth_york",
+                    spouses: [
+                        {id: "james_iv_scotland", name: "James IV of Scotland", house: "Stuart"},
+                        {id: "archibald_douglas", name: "Archibald Douglas", house: "Douglas"}
+                    ],
+                    children: ["james_v_scotland"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Margaret_Tudor",
+                    notes: "Her great-grandson became James I of England, uniting English and Scottish crowns",
+                    isPortal: true
+                },
+                {
+                    id: "james_i",
+                    name: "James I (VI of Scotland)",
+                    house: "Stuart",
+                    born: "1566",
+                    died: "1625",
+                    titles: [
+                        {title: "King of Scotland", from: "1567", to: "1625"},
+                        {title: "King of England", from: "1603", to: "1625"}
+                    ],
+                    spouses: [{id: "anne_denmark", name: "Anne of Denmark", house: "Oldenburg"}],
+                    children: ["charles_i"],
+                    wikipedia: "https://en.wikipedia.org/wiki/James_VI_and_I",
+                    notes: "United crowns of England and Scotland"
+                },
+                {
+                    id: "charles_i",
+                    name: "Charles I",
+                    house: "Stuart",
+                    born: "1600",
+                    died: "1649",
+                    titles: [{title: "King of England", from: "1625", to: "1649"}],
+                    father: "james_i",
+                    mother: "anne_denmark",
+                    spouses: [{id: "henrietta_maria", name: "Henrietta Maria of France", house: "Bourbon"}],
+                    children: ["charles_ii", "james_ii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Charles_I_of_England",
+                    notes: "Executed 1649 in English Civil War"
+                },
+                {
+                    id: "charles_ii",
+                    name: "Charles II",
+                    house: "Stuart",
+                    born: "1630",
+                    died: "1685",
+                    titles: [{title: "King of England", from: "1660", to: "1685"}],
+                    father: "charles_i",
+                    mother: "henrietta_maria",
+                    spouses: [{id: "catherine_braganza", name: "Catherine of Braganza", house: "Braganza"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Charles_II_of_England",
+                    notes: "Restoration monarchy. No legitimate children (many illegitimate).",
+                    extinct: true
+                },
+                {
+                    id: "james_ii",
+                    name: "James II (VII of Scotland)",
+                    house: "Stuart",
+                    born: "1633",
+                    died: "1701",
+                    titles: [{title: "King of England", from: "1685", to: "1688"}],
+                    father: "charles_i",
+                    mother: "henrietta_maria",
+                    spouses: [
+                        {id: "anne_hyde", name: "Anne Hyde", house: "Hyde"},
+                        {id: "mary_modena", name: "Mary of Modena", house: "Este"}
+                    ],
+                    children: ["mary_ii", "anne_gb"],
+                    wikipedia: "https://en.wikipedia.org/wiki/James_II_of_England",
+                    notes: "Deposed in Glorious Revolution 1688"
+                },
+                {
+                    id: "mary_ii",
+                    name: "Mary II",
+                    house: "Stuart",
+                    born: "1662",
+                    died: "1694",
+                    titles: [{title: "Queen of England", from: "1689", to: "1694"}],
+                    father: "james_ii",
+                    mother: "anne_hyde",
+                    spouses: [{id: "william_iii", name: "William III of Orange", house: "Orange-Nassau"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Mary_II_of_England",
+                    notes: "Ruled jointly with William III. Died childless.",
+                    extinct: true
+                },
+
+                // HOUSE OF ORANGE-NASSAU (1689-1702)
+                {
+                    id: "william_iii",
+                    name: "William III of Orange",
+                    house: "Orange-Nassau",
+                    born: "1650",
+                    died: "1702",
+                    titles: [
+                        {title: "Stadtholder of Netherlands", from: "1672", to: "1702"},
+                        {title: "King of England", from: "1689", to: "1702"}
+                    ],
+                    spouses: [{id: "mary_ii", name: "Mary II", house: "Stuart"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/William_III_of_England",
+                    notes: "Glorious Revolution. Ruled jointly with Mary II. No children.",
+                    extinct: true
+                },
+                {
+                    id: "anne_gb",
+                    name: "Anne",
+                    house: "Stuart",
+                    born: "1665",
+                    died: "1714",
+                    titles: [{title: "Queen of Great Britain", from: "1702", to: "1714"}],
+                    father: "james_ii",
+                    mother: "anne_hyde",
+                    spouses: [{id: "george_denmark", name: "George of Denmark", house: "Oldenburg"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Anne,_Queen_of_Great_Britain",
+                    notes: "Last Stuart monarch. 17 pregnancies, no surviving children. Act of Settlement passed.",
+                    extinct: true
+                },
+
+                // HOUSE OF HANOVER (1714-1901)
+                {
+                    id: "george_i",
+                    name: "George I",
+                    house: "Hanover",
+                    born: "1660",
+                    died: "1727",
+                    titles: [
+                        {title: "Elector of Hanover", from: "1698", to: "1727"},
+                        {title: "King of Great Britain", from: "1714", to: "1727"}
+                    ],
+                    spouses: [{id: "sophia_dorothea_celle", name: "Sophia Dorothea of Celle", house: "Brunswick-Lüneburg"}],
+                    children: ["george_ii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/George_I_of_Great_Britain",
+                    notes: "First Hanoverian king. German-speaking."
+                },
+                {
+                    id: "george_ii",
+                    name: "George II",
+                    house: "Hanover",
+                    born: "1683",
+                    died: "1760",
+                    titles: [{title: "King of Great Britain", from: "1727", to: "1760"}],
+                    father: "george_i",
+                    spouses: [{id: "caroline_ansbach", name: "Caroline of Ansbach", house: "Ansbach"}],
+                    children: ["frederick_wales"],
+                    wikipedia: "https://en.wikipedia.org/wiki/George_II_of_Great_Britain",
+                    notes: "Last British monarch born outside Britain"
+                },
+                {
+                    id: "frederick_wales",
+                    name: "Frederick, Prince of Wales",
+                    house: "Hanover",
+                    born: "1707",
+                    died: "1751",
+                    titles: [{title: "Prince of Wales", from: "1729", to: "1751"}],
+                    father: "george_ii",
+                    spouses: [{id: "augusta_saxe_gotha", name: "Augusta of Saxe-Gotha", house: "Saxe-Gotha"}],
+                    children: ["george_iii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Frederick,_Prince_of_Wales",
+                    notes: "Predeceased his father. Never became king."
+                },
+                {
+                    id: "george_iii",
+                    name: "George III",
+                    house: "Hanover",
+                    born: "1738",
+                    died: "1820",
+                    titles: [{title: "King of Great Britain", from: "1760", to: "1820"}],
+                    father: "frederick_wales",
+                    mother: "augusta_saxe_gotha",
+                    spouses: [{id: "charlotte_mecklenburg", name: "Charlotte of Mecklenburg-Strelitz", house: "Mecklenburg-Strelitz"}],
+                    children: ["george_iv", "william_iv"],
+                    wikipedia: "https://en.wikipedia.org/wiki/George_III_of_the_United_Kingdom",
+                    notes: "Lost American colonies. Suffered mental illness."
+                },
+                {
+                    id: "george_iv",
+                    name: "George IV",
+                    house: "Hanover",
+                    born: "1762",
+                    died: "1830",
+                    titles: [
+                        {title: "Prince Regent", from: "1811", to: "1820"},
+                        {title: "King of the United Kingdom", from: "1820", to: "1830"}
+                    ],
+                    father: "george_iii",
+                    mother: "charlotte_mecklenburg",
+                    spouses: [{id: "caroline_brunswick", name: "Caroline of Brunswick", house: "Brunswick-Wolfenbüttel"}],
+                    children: ["charlotte_wales"],
+                    wikipedia: "https://en.wikipedia.org/wiki/George_IV_of_the_United_Kingdom"
+                },
+                {
+                    id: "william_iv",
+                    name: "William IV",
+                    house: "Hanover",
+                    born: "1765",
+                    died: "1837",
+                    titles: [{title: "King of the United Kingdom", from: "1830", to: "1837"}],
+                    father: "george_iii",
+                    mother: "charlotte_mecklenburg",
+                    spouses: [{id: "adelaide_saxe_meiningen", name: "Adelaide of Saxe-Meiningen", house: "Saxe-Meiningen"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/William_IV_of_the_United_Kingdom",
+                    notes: "The Sailor King. No surviving legitimate children.",
+                    extinct: true
+                },
+                {
+                    id: "victoria",
+                    name: "Victoria",
+                    house: "Hanover",
+                    born: "1819",
+                    died: "1901",
+                    titles: [
+                        {title: "Queen of the United Kingdom", from: "1837", to: "1901"},
+                        {title: "Empress of India", from: "1876", to: "1901"}
+                    ],
+                    spouses: [{id: "albert_saxe_coburg", name: "Albert of Saxe-Coburg and Gotha", house: "Saxe-Coburg and Gotha"}],
+                    children: ["edward_vii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Queen_Victoria",
+                    notes: "Longest reign until Elizabeth II. Grandmother of Europe."
+                },
+
+                // HOUSE OF SAXE-COBURG AND GOTHA / WINDSOR (1901-present)
+                {
+                    id: "edward_vii",
+                    name: "Edward VII",
+                    house: "Saxe-Coburg and Gotha",
+                    born: "1841",
+                    died: "1910",
+                    titles: [{title: "King of the United Kingdom", from: "1901", to: "1910"}],
+                    father: "albert_saxe_coburg",
+                    mother: "victoria",
+                    spouses: [{id: "alexandra_denmark", name: "Alexandra of Denmark", house: "Glücksburg"}],
+                    children: ["george_v"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_VII"
+                },
+                {
+                    id: "george_v",
+                    name: "George V",
+                    house: "Windsor",
+                    born: "1865",
+                    died: "1936",
+                    titles: [{title: "King of the United Kingdom", from: "1910", to: "1936"}],
+                    father: "edward_vii",
+                    mother: "alexandra_denmark",
+                    spouses: [{id: "mary_teck", name: "Mary of Teck", house: "Teck"}],
+                    children: ["edward_viii", "george_vi"],
+                    wikipedia: "https://en.wikipedia.org/wiki/George_V",
+                    notes: "Changed house name from Saxe-Coburg and Gotha to Windsor (1917)"
+                },
+                {
+                    id: "edward_viii",
+                    name: "Edward VIII",
+                    house: "Windsor",
+                    born: "1894",
+                    died: "1972",
+                    titles: [{title: "King of the United Kingdom", from: "Jan 1936", to: "Dec 1936"}],
+                    father: "george_v",
+                    mother: "mary_teck",
+                    spouses: [{id: "wallis_simpson", name: "Wallis Simpson", house: "Warfield"}],
+                    children: [],
+                    wikipedia: "https://en.wikipedia.org/wiki/Edward_VIII",
+                    notes: "Abdicated to marry Wallis Simpson. Ruled 326 days. No children.",
+                    extinct: true
+                },
+                {
+                    id: "george_vi",
+                    name: "George VI",
+                    house: "Windsor",
+                    born: "1895",
+                    died: "1952",
+                    titles: [{title: "King of the United Kingdom", from: "1936", to: "1952"}],
+                    father: "george_v",
+                    mother: "mary_teck",
+                    spouses: [{id: "elizabeth_bowes_lyon", name: "Elizabeth Bowes-Lyon", house: "Bowes-Lyon"}],
+                    children: ["elizabeth_ii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/George_VI",
+                    notes: "Became king after Edward VIII abdicated"
+                },
+                {
+                    id: "elizabeth_ii",
+                    name: "Elizabeth II",
+                    house: "Windsor",
+                    born: "1926",
+                    died: "2022",
+                    titles: [{title: "Queen of the United Kingdom", from: "1952", to: "2022"}],
+                    father: "george_vi",
+                    mother: "elizabeth_bowes_lyon",
+                    spouses: [{id: "philip_mountbatten", name: "Prince Philip", house: "Glücksburg"}],
+                    children: ["charles_iii"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Elizabeth_II",
+                    notes: "Longest-reigning British monarch (70 years)"
+                },
+                {
+                    id: "charles_iii",
+                    name: "Charles III",
+                    house: "Windsor",
+                    born: "1948",
+                    titles: [{title: "King of the United Kingdom", from: "2022", to: "present"}],
+                    father: "philip_mountbatten",
+                    mother: "elizabeth_ii",
+                    spouses: [
+                        {id: "diana_spencer", name: "Diana Spencer", house: "Spencer"},
+                        {id: "camilla_parker_bowles", name: "Camilla Parker Bowles", house: "Shand"}
+                    ],
+                    children: ["william_wales", "harry_wales"],
+                    wikipedia: "https://en.wikipedia.org/wiki/Charles_III",
+                    notes: "Current reigning monarch"
+                }
+            ]
+        };
+
+        // Dynasty colors - BETTER DIFFERENTIATION
+        const dynastyColors = {
+            "Wessex": "#c41e3a",
+            "Godwin": "#5c4033",
+            "Knýtlinga": "#2d5016",
+            "Normandy": "#8b0000",
+            "Blois": "#b8860b",
+            "Plantagenet": "#cc0000",
+            "Lancaster": "#e63946",
+            "York": "#f1faee",
+            "Tudor": "#ff6b35",
+            "Stuart": "#6a4c93",
+            "Orange-Nassau": "#ff9500",
+            "Hanover": "#ffd700",
+            "Saxe-Coburg and Gotha": "#daa520",
+            "Windsor": "#b8860b"
+        };
+
+        // Build graph data structures
+        let nodes = [];
+        let links = [];
+        let activeFilter = null;
+
+        function buildGraph() {
+            nodes = royalData.people.map(p => ({
+                id: p.id,
+                name: p.name,
+                house: p.house,
+                ...p
+            }));
+
+            links = [];
+            
+            // Parent-child links
+            royalData.people.forEach(person => {
+                if (person.father) {
+                    links.push({
+                        source: person.father,
+                        target: person.id,
+                        type: "parent"
+                    });
+                }
+                if (person.mother) {
+                    links.push({
+                        source: person.mother,
+                        target: person.id,
+                        type: "parent"
+                    });
+                }
+                
+                // Spouse links
+                if (person.spouses) {
+                    person.spouses.forEach(spouse => {
+                        if (spouse.id && royalData.people.find(p => p.id === spouse.id)) {
+                            links.push({
+                                source: person.id,
+                                target: spouse.id,
+                                type: "marriage"
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // Initialize visualization
+        const width = window.innerWidth - 350;
+        const height = window.innerHeight;
+
+        const svg = d3.select("#graph")
+            .attr("width", width)
+            .attr("height", height);
+
+        const g = svg.append("g");
+
+        // Zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Simple generation-based genealogy layout
+        let link, node;
+
+        function updateGraph() {
+            // Filter nodes
+            let filteredNodes = nodes;
+            let filteredLinks = links;
+
+            if (activeFilter) {
+                filteredNodes = nodes.filter(n => n.house === activeFilter);
+                const nodeIds = new Set(filteredNodes.map(n => n.id));
+                filteredLinks = links.filter(l => 
+                    nodeIds.has(l.source.id || l.source) && 
+                    nodeIds.has(l.target.id || l.target)
+                );
+            }
+
+            // Calculate generations properly
+            const generations = new Map();
+            const visited = new Set();
+
+            function assignGeneration(personId, gen) {
+                const person = filteredNodes.find(p => p.id === personId);
+                if (!person || visited.has(personId)) return;
+                
+                const currentGen = generations.get(personId);
+                if (currentGen !== undefined && currentGen <= gen) return;
+                
+                generations.set(personId, gen);
+                visited.add(personId);
+                
+                // Children are one generation down
+                if (person.children) {
+                    person.children.forEach(childId => {
+                        assignGeneration(childId, gen + 1);
+                    });
+                }
+            }
+
+            // Start with people who have no parents in dataset
+            filteredNodes.forEach(person => {
+                const hasParentInDataset = person.father && filteredNodes.find(p => p.id === person.father) ||
+                                          person.mother && filteredNodes.find(p => p.id === person.mother);
+                if (!hasParentInDataset) {
+                    assignGeneration(person.id, 0);
+                }
+            });
+
+            // Group by generation
+            const genGroups = new Map();
+            filteredNodes.forEach(node => {
+                const gen = generations.get(node.id) || 0;
+                if (!genGroups.has(gen)) genGroups.set(gen, []);
+                genGroups.get(gen).push(node);
+            });
+
+            // Layout parameters
+            const genHeight = 150;  // Vertical spacing between generations
+            const nodeSpacing = 200; // Horizontal spacing between nodes
+            const startY = 100;
+
+            // Position nodes
+            genGroups.forEach((nodesInGen, gen) => {
+                const genWidth = nodesInGen.length * nodeSpacing;
+                const startX = (width - genWidth) / 2;
+                
+                nodesInGen.forEach((node, index) => {
+                    node.x = startX + (index * nodeSpacing) + nodeSpacing / 2;
+                    node.y = startY + (gen * genHeight);
+                });
+            });
+
+            // Update links
+            link = g.selectAll(".link")
+                .data(filteredLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
+
+            link.exit().remove();
+
+            const linkEnter = link.enter()
+                .append("path")
+                .attr("class", d => d.type === "marriage" ? "link-marriage" : "link");
+
+            link = linkEnter.merge(link);
+
+            link.attr("d", d => {
+                const source = typeof d.source === 'object' ? d.source : filteredNodes.find(n => n.id === d.source);
+                const target = typeof d.target === 'object' ? d.target : filteredNodes.find(n => n.id === d.target);
+                
+                if (!source || !target) return "";
+
+                if (d.type === "marriage") {
+                    // Horizontal line for marriages
+                    return `M ${source.x},${source.y} L ${target.x},${target.y}`;
+                } else {
+                    // Parent-child: straight down then across
+                    const midY = source.y + genHeight / 2;
+                    return `M ${source.x},${source.y} 
+                            L ${source.x},${midY}
+                            L ${target.x},${midY}
+                            L ${target.x},${target.y}`;
+                }
+            });
+
+            // Update nodes
+            node = g.selectAll(".node")
+                .data(filteredNodes, d => d.id);
+
+            node.exit().remove();
+
+            const nodeEnter = node.enter()
+                .append("g")
+                .attr("class", "node")
+                .on("click", (event, d) => showPersonInfo(d));
+
+            // Add rectangle instead of circle
+            nodeEnter.append("rect")
+                .attr("width", 140)
+                .attr("height", 50)
+                .attr("x", -70)
+                .attr("y", -25)
+                .attr("rx", 5)
+                .style("fill", d => dynastyColors[d.house] || "#999")
+                .style("stroke", "#fff")
+                .style("stroke-width", 2);
+
+            // Add name text inside box
+            nodeEnter.append("text")
+                .attr("dy", -5)
+                .attr("text-anchor", "middle")
+                .style("fill", d => d.house === "York" ? "#000" : "#fff")
+                .style("font-size", "12px")
+                .style("font-weight", "bold")
+                .style("pointer-events", "none")
+                .text(d => {
+                    // Shorten long names
+                    const name = d.name;
+                    if (name.length > 18) {
+                        return name.substring(0, 16) + "...";
+                    }
+                    return name;
+                });
+
+            // Add birth-death dates below name
+            nodeEnter.append("text")
+                .attr("dy", 10)
+                .attr("text-anchor", "middle")
+                .style("fill", d => d.house === "York" ? "#000" : "#fff")
+                .style("font-size", "10px")
+                .style("pointer-events", "none")
+                .text(d => {
+                    if (d.born && d.died) {
+                        return `${d.born}-${d.died}`;
+                    } else if (d.born) {
+                        return `b. ${d.born}`;
+                    } else if (d.died) {
+                        return `d. ${d.died}`;
+                    }
+                    return "";
+                });
+
+            node = nodeEnter.merge(node);
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        }
+
+        // Show person info
+        function showPersonInfo(person) {
+            const panel = document.getElementById("info-panel");
+            
+            let html = `
+                <div class="info-name">${person.name}${person.nickname ? ` "${person.nickname}"` : ''}</div>
+                <div class="info-house">House of ${person.house}</div>
+            `;
+
+            // Life dates
+            if (person.born || person.died) {
+                html += `<div class="info-section">
+                    <h3>LIFE</h3>`;
+                if (person.born) html += `<div class="info-item">Born: ${person.born}</div>`;
+                if (person.died) html += `<div class="info-item">Died: ${person.died}</div>`;
+                if (person.extinct) html += `<div class="info-item extinct-marker">⚠ Line extinct (no continuing descendants)</div>`;
+                html += `</div>`;
+            }
+
+            // Parents
+            if (person.father || person.mother) {
+                html += `<div class="info-section"><h3>PARENTS</h3>`;
+                if (person.father) {
+                    const father = royalData.people.find(p => p.id === person.father);
+                    html += `<div class="info-item">• Father: <span class="clickable-link" onclick="showPersonById('${person.father}')">${father ? father.name : person.father}</span></div>`;
+                }
+                if (person.mother) {
+                    const mother = royalData.people.find(p => p.id === person.mother);
+                    html += `<div class="info-item">• Mother: <span class="clickable-link" onclick="showPersonById('${person.mother}')">${mother ? mother.name : person.mother}</span></div>`;
+                }
+                html += `</div>`;
+            }
+
+            // Spouses (WINDOWS)
+            if (person.spouses && person.spouses.length > 0) {
+                html += `<div class="info-section"><h3>SPOUSE(S)</h3>`;
+                person.spouses.forEach(spouse => {
+                    const spouseData = royalData.people.find(p => p.id === spouse.id);
+                    if (spouseData) {
+                        html += `<div class="info-item">• <span class="clickable-link" onclick="showPersonById('${spouse.id}')">${spouse.name}</span>`;
+                        if (spouse.house) html += ` (House of ${spouse.house})`;
+                        html += `</div>`;
+                    } else {
+                        html += `<div class="info-item">• ${spouse.name}${spouse.house ? ` (House of ${spouse.house})` : ''}</div>`;
+                    }
+                });
+                html += `</div>`;
+            }
+
+            // Titles
+            if (person.titles && person.titles.length > 0) {
+                html += `<div class="info-section"><h3>TITLES & REIGNS</h3>`;
+                person.titles.forEach(title => {
+                    html += `<div class="title-entry">• ${title.title}`;
+                    if (title.from) html += `<br>&nbsp;&nbsp;&nbsp;${title.from}${title.to ? ` - ${title.to}` : ''}`;
+                    html += `</div>`;
+                });
+                html += `</div>`;
+            }
+
+            // Children
+            if (person.children && person.children.length > 0) {
+                html += `<div class="info-section"><h3>CHILDREN (${person.children.length})</h3>`;
+                person.children.forEach(childId => {
+                    const child = royalData.people.find(p => p.id === childId);
+                    if (child) {
+                        html += `<div class="info-item">• <span class="clickable-link" onclick="showPersonById('${childId}')">${child.name}</span>`;
+                        if (child.extinct) html += ` <span class="extinct-marker">[EXTINCT]</span>`;
+                        if (child.spouses && child.spouses.length > 0 && child.spouses[0].house && child.spouses[0].house !== person.house) {
+                            html += ` → married into ${child.spouses[0].house}`;
+                        }
+                        html += `</div>`;
+                    }
+                });
+                html += `</div>`;
+            }
+
+            // Notes
+            if (person.notes) {
+                html += `<div class="info-section"><h3>NOTES</h3><div class="info-item">${person.notes}</div></div>`;
+            }
+
+            // Wikipedia link
+            if (person.wikipedia) {
+                html += `<div class="info-section"><a href="${person.wikipedia}" target="_blank" class="clickable-link">→ View on Wikipedia</a></div>`;
+            }
+
+            panel.innerHTML = html;
+        }
+
+        window.showPersonById = function(id) {
+            const person = royalData.people.find(p => p.id === id);
+            if (person) {
+                showPersonInfo(person);
+                // Highlight the node
+                d3.selectAll(".node rect")
+                    .style("stroke-width", d => d.id === id ? 5 : 2);
+            }
+        };
+
+        // Search functionality
+        document.getElementById("search-box").addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase();
+            if (query.length < 2) {
+                d3.selectAll(".node rect").style("opacity", 1);
+                d3.selectAll(".node text").style("opacity", 1);
+                return;
+            }
+
+            d3.selectAll(".node").each(function(d) {
+                const match = d.name.toLowerCase().includes(query);
+                d3.select(this).select("rect").style("opacity", match ? 1 : 0.2);
+                d3.select(this).selectAll("text").style("opacity", match ? 1 : 0.2);
+            });
+
+            // Show first match
+            const match = royalData.people.find(p => p.name.toLowerCase().includes(query));
+            if (match) {
+                showPersonInfo(match);
+            }
+        });
+
+        // Dynasty filters
+        function createDynastyButtons() {
+            const container = document.getElementById("dynasty-buttons");
+            const dynasties = [...new Set(royalData.people.map(p => p.house))].sort();
+            
+            dynasties.forEach(dynasty => {
+                const btn = document.createElement("div");
+                btn.className = "dynasty-btn";
+                btn.textContent = dynasty;
+                btn.style.borderColor = dynastyColors[dynasty] || "#999";
+                btn.style.color = dynastyColors[dynasty] || "#999";
+                
+                btn.onclick = () => {
+                    if (activeFilter === dynasty) {
+                        activeFilter = null;
+                        btn.classList.remove("active");
+                    } else {
+                        activeFilter = dynasty;
+                        document.querySelectorAll(".dynasty-btn").forEach(b => b.classList.remove("active"));
+                        btn.classList.add("active");
+                    }
+                    updateGraph();
+                };
+                
+                container.appendChild(btn);
+            });
+        }
+
+        // Legend
+        function createLegend() {
+            const container = document.getElementById("legend-content");
+            const mainDynasties = [
+                "Wessex", "Knýtlinga", "Normandy", "Plantagenet", 
+                "Lancaster", "York", "Tudor", "Stuart", "Hanover", "Windsor"
+            ];
+            
+            mainDynasties.forEach(dynasty => {
+                const item = document.createElement("div");
+                item.className = "legend-item";
+                item.innerHTML = `
+                    <div class="legend-color" style="background-color: ${dynastyColors[dynasty]}"></div>
+                    <div>${dynasty}</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Control functions
+        window.resetZoom = function() {
+            svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+        };
+
+        window.centerGraph = function() {
+            const bounds = g.node().getBBox();
+            const fullWidth = bounds.width;
+            const fullHeight = bounds.height;
+            const midX = bounds.x + fullWidth / 2;
+            const midY = bounds.y + fullHeight / 2;
+            
+            const scale = 0.8 / Math.max(fullWidth / width, fullHeight / height);
+            const translate = [width / 2 - scale * midX, height / 2 - scale * midY];
+            
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+            );
+        };
+
+        window.expandAll = function() {
+            activeFilter = null;
+            document.querySelectorAll(".dynasty-btn").forEach(b => b.classList.remove("active"));
+            updateGraph();
+        };
+
+        // Initialize
+        buildGraph();
+        createDynastyButtons();
+        createLegend();
+        updateGraph();
+
+        // Auto-center on load
+        setTimeout(() => {
+            centerGraph();
+        }, 1000);
+    </script>
+</body>
+</html>
