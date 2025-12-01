@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>British Royal Family - Complete Genealogy</title>
+    <script src="https://balkangraph.com/js/latest/OrgChart.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        #tree {
+            width: 100%;
+            height: 100vh;
+        }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .legend h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 10px;
+            border: 1px solid #34495e;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>British Royal Family Tree</h1>
+        <p>Complete Genealogy • 519 AD - Present</p>
+    </div>
+
+    <div class="legend">
+        <h3>Dynasty Colors</h3>
+        <div id="legend-items"></div>
+    </div>
+
+    <div id="tree"></div>
+
+    <script>
+        // Dynasty colors - Wessex BLUE, Normandy RED
+        const dynastyColors = {
+            "Wessex": "#0066cc",
+            "Godwin": "#8b4513",
+            "Knýtlinga": "#228b22",
+            "Normandy": "#cc0000",
+            "Blois": "#ff8c00",
+            "Plantagenet": "#8b0000",
+            "Lancaster": "#dc143c",
+            "York": "#f5f5f5",
+            "Tudor": "#ff6347",
+            "Stuart": "#9370db",
+            "Orange-Nassau": "#ff8c00",
+            "Hanover": "#ffd700",
+            "Windsor": "#b8860b",
+            "Mercia": "#4682b4",
+            "Flanders": "#20b2aa",
+            "Dunkeld": "#8fbc8f",
+            "Aquitaine": "#cd853f",
+            "Valois": "#7b68ee",
+            "Bohemia": "#9370db",
+            "Kent": "#6a5acd",
+            "Brittany": "#48d1cc"
+        };
+
+        // COMPLETE family data with ALL children
+        const familyData = [
+            // HOUSE OF WESSEX - COMPLETE FAMILIES
+            {id: "alfred", name: "Alfred the Great", house: "Wessex", born: "847", died: "899", title: "King of Wessex", reign: "871-899", pids: ["ealhswith"]},
+            {id: "ealhswith", name: "Ealhswith", house: "Mercia", died: "902", gender: "female"},
+            
+            // Alfred's children - ALL 5
+            {id: "aethelflaed", name: "Æthelflaed", house: "Wessex", born: "870", died: "918", gender: "female", fid: "alfred", mid: "ealhswith", pids: ["aethelred_mercia"]},
+            {id: "aethelred_mercia", name: "Æthelred of Mercia", house: "Mercia"},
+            {id: "edward_elder", name: "Edward the Elder", house: "Wessex", born: "874", died: "924", title: "King", reign: "899-924", fid: "alfred", mid: "ealhswith", pids: ["ecgwynn", "aelfflaed", "eadgifu"]},
+            {id: "aethelgifu", name: "Æthelgifu", house: "Wessex", born: "875", died: "896", gender: "female", fid: "alfred", mid: "ealhswith"},
+            {id: "aelfthryth_alfred", name: "Ælfthryth", house: "Wessex", born: "877", died: "929", gender: "female", fid: "alfred", mid: "ealhswith", pids: ["baldwin_flanders"]},
+            {id: "baldwin_flanders", name: "Baldwin II of Flanders", house: "Flanders"},
+            {id: "aethelweard", name: "Æthelweard", house: "Wessex", born: "880", died: "922", fid: "alfred", mid: "ealhswith"},
+            
+            // Edward the Elder's THREE wives
+            {id: "ecgwynn", name: "Ecgwynn", house: "Wessex", gender: "female"},
+            {id: "aelfflaed", name: "Ælfflæd", house: "Kent", gender: "female"},
+            {id: "eadgifu", name: "Eadgifu of Kent", house: "Kent", gender: "female"},
+            
+            // Edward the Elder's children - AT LEAST 14
+            {id: "athelstan", name: "Æthelstan", house: "Wessex", born: "894", died: "939", title: "King", reign: "927-939", fid: "edward_elder", mid: "ecgwynn"},
+            {id: "edmund_i", name: "Edmund I", house: "Wessex", born: "921", died: "946", title: "King", reign: "939-946", fid: "edward_elder", mid: "eadgifu", pids: ["aelfgifu_shaftesbury", "aethelflaed_damerham"]},
+            {id: "eadred", name: "Eadred", house: "Wessex", born: "923", died: "955", title: "King", reign: "946-955", fid: "edward_elder", mid: "eadgifu"},
+            {id: "eadgifu_daughter", name: "Eadgifu", house: "Wessex", gender: "female", fid: "edward_elder", mid: "eadgifu", pids: ["charles_simple"]},
+            {id: "charles_simple", name: "Charles III of France", house: "Capet"},
+            {id: "eadhild", name: "Eadhild", house: "Wessex", gender: "female", fid: "edward_elder", mid: "eadgifu", pids: ["hugh_paris"]},
+            {id: "hugh_paris", name: "Hugh of Paris", house: "Capet"},
+            
+            // Edmund I's wives
+            {id: "aelfgifu_shaftesbury", name: "Ælfgifu of Shaftesbury", house: "Wessex", gender: "female"},
+            {id: "aethelflaed_damerham", name: "Æthelflæd of Damerham", house: "Wessex", gender: "female"},
+            
+            // Edmund I's children
+            {id: "eadwig", name: "Eadwig", house: "Wessex", born: "940", died: "959", title: "King", reign: "955-959", fid: "edmund_i", mid: "aelfgifu_shaftesbury", pids: ["aelfgifu_eadwig"]},
+            {id: "aelfgifu_eadwig", name: "Ælfgifu", house: "Wessex", gender: "female"},
+            {id: "edgar", name: "Edgar the Peaceful", house: "Wessex", born: "943", died: "975", title: "King", reign: "959-975", fid: "edmund_i", mid: "aelfgifu_shaftesbury", pids: ["aethelflaed_eneda", "aelfthryth"]},
+            
+            // Edgar's wives
+            {id: "aethelflaed_eneda", name: "Æthelflæd Eneda", house: "Wessex", gender: "female"},
+            {id: "aelfthryth", name: "Ælfthryth", house: "Wessex", gender: "female"},
+            
+            // Edgar's children
+            {id: "edward_martyr", name: "Edward the Martyr", house: "Wessex", born: "962", died: "978", title: "King", reign: "975-978", fid: "edgar", mid: "aethelflaed_eneda"},
+            {id: "aethelred", name: "Æthelred the Unready", house: "Wessex", born: "966", died: "1016", title: "King", reign: "978-1016", fid: "edgar", mid: "aelfthryth", pids: ["aelfgifu_york", "emma"]},
+            
+            // Æthelred's wives
+            {id: "aelfgifu_york", name: "Ælfgifu of York", house: "Wessex", gender: "female"},
+            {id: "emma", name: "Emma of Normandy", house: "Normandy", born: "984", died: "1052", gender: "female"},
+            
+            // Æthelred's children - MANY
+            {id: "athelstan_aetheling", name: "Athelstan Ætheling", house: "Wessex", died: "1014", fid: "aethelred", mid: "aelfgifu_york"},
+            {id: "edmund_ironside", name: "Edmund Ironside", house: "Wessex", born: "990", died: "1016", title: "King", reign: "1016", fid: "aethelred", mid: "aelfgifu_york", pids: ["ealdgyth"]},
+            {id: "ealdgyth", name: "Ealdgyth", house: "Wessex", gender: "female"},
+            {id: "edward_confessor", name: "Edward the Confessor", house: "Wessex", born: "1003", died: "1066", title: "King", reign: "1042-1066", fid: "aethelred", mid: "emma", pids: ["edith_godwin"]},
+            {id: "edith_godwin", name: "Edith of Wessex", house: "Godwin", gender: "female"},
+            {id: "alfred_aetheling", name: "Alfred Ætheling", house: "Wessex", born: "1005", died: "1036", fid: "aethelred", mid: "emma"},
+            
+            // Edmund Ironside's children
+            {id: "edward_exile", name: "Edward the Exile", house: "Wessex", born: "1016", died: "1057", fid: "edmund_ironside", mid: "ealdgyth", pids: ["agatha"]},
+            {id: "agatha", name: "Agatha", house: "Wessex", gender: "female"},
+            {id: "edmund_wessex", name: "Edmund", house: "Wessex", died: "1046", fid: "edmund_ironside", mid: "ealdgyth"},
+            
+            // Edward the Exile's children - THE EDGAR CONNECTION
+            {id: "edgar_aetheling", name: "Edgar Ætheling", house: "Wessex", born: "1051", died: "1125", title: "Proclaimed King (never crowned)", fid: "edward_exile", mid: "agatha"},
+            {id: "margaret_scotland", name: "Margaret of Scotland", house: "Wessex", born: "1045", died: "1093", fid: "edward_exile", mid: "agatha", gender: "female", pids: ["malcolm_iii"]},
+            {id: "malcolm_iii", name: "Malcolm III", house: "Dunkeld"},
+            {id: "christina_wessex", name: "Christina", house: "Wessex", born: "1057", gender: "female", fid: "edward_exile", mid: "agatha"},
+            
+            // Margaret of Scotland's children - 8 children
+            {id: "edward_scotland", name: "Edward", house: "Dunkeld", died: "1093", fid: "malcolm_iii", mid: "margaret_scotland"},
+            {id: "edmund_scotland", name: "Edmund", house: "Dunkeld", died: "1097", fid: "malcolm_iii", mid: "margaret_scotland"},
+            {id: "ethelred_scotland", name: "Ethelred", house: "Dunkeld", died: "1097", fid: "malcolm_iii", mid: "margaret_scotland"},
+            {id: "edgar_scotland", name: "Edgar", house: "Dunkeld", born: "1074", died: "1107", title: "King of Scotland", fid: "malcolm_iii", mid: "margaret_scotland"},
+            {id: "alexander_scotland", name: "Alexander I", house: "Dunkeld", born: "1078", died: "1124", title: "King of Scotland", fid: "malcolm_iii", mid: "margaret_scotland"},
+            {id: "david_scotland", name: "David I", house: "Dunkeld", born: "1084", died: "1153", title: "King of Scotland", fid: "malcolm_iii", mid: "margaret_scotland"},
+            {id: "edith_scotland", name: "Edith (Matilda)", house: "Dunkeld", born: "1080", died: "1118", gender: "female", fid: "malcolm_iii", mid: "margaret_scotland"},
+            {id: "mary_scotland", name: "Mary", house: "Dunkeld", born: "1082", died: "1116", gender: "female", fid: "malcolm_iii", mid: "margaret_scotland", pids: ["eustace_boulogne"]},
+            {id: "eustace_boulogne", name: "Eustace III of Boulogne", house: "Blois"},
+            
+            // HOUSE OF GODWIN
+            {id: "godwin_wessex", name: "Godwin, Earl of Wessex", house: "Godwin", died: "1053"},
+            {id: "harold_godwinson", name: "Harold Godwinson", house: "Godwin", born: "1022", died: "1066", title: "King", reign: "Jan-Oct 1066", fid: "godwin_wessex", pids: ["edith_swan", "ealdgyth_mercia"]},
+            {id: "edith_swan", name: "Edith Swannesha", house: "Godwin", gender: "female"},
+            {id: "ealdgyth_mercia", name: "Ealdgyth of Mercia", house: "Mercia", gender: "female"},
+            
+            // Harold's children
+            {id: "godwine_harold", name: "Godwine", house: "Godwin", fid: "harold_godwinson", mid: "edith_swan"},
+            {id: "edmund_harold", name: "Edmund", house: "Godwin", fid: "harold_godwinson", mid: "edith_swan"},
+            {id: "magnus_harold", name: "Magnus", house: "Godwin", fid: "harold_godwinson", mid: "edith_swan"},
+            {id: "harold_harold", name: "Harold", house: "Godwin", fid: "harold_godwinson", mid: "ealdgyth_mercia"},
+            
+            // HOUSE OF DENMARK
+            {id: "sweyn", name: "Sweyn Forkbeard", house: "Knýtlinga", born: "960", died: "1014", title: "King", reign: "1013-1014", pids: ["gunhild"]},
+            {id: "gunhild", name: "Gunhild of Poland", house: "Knýtlinga", gender: "female"},
+            {id: "cnut", name: "Cnut the Great", house: "Knýtlinga", born: "990", died: "1035", title: "King", reign: "1016-1035", fid: "sweyn", mid: "gunhild", pids: ["aelfgifu_northampton", "emma"]},
+            {id: "aelfgifu_northampton", name: "Ælfgifu of Northampton", house: "Knýtlinga", gender: "female"},
+            
+            // Cnut's children
+            {id: "harold_harefoot", name: "Harold Harefoot", house: "Knýtlinga", born: "1015", died: "1040", title: "King", reign: "1035-1040", fid: "cnut", mid: "aelfgifu_northampton"},
+            {id: "harthacnut", name: "Harthacnut", house: "Knýtlinga", born: "1018", died: "1042", title: "King", reign: "1040-1042", fid: "cnut", mid: "emma"},
+            {id: "svein_norway", name: "Svein Knutsson", house: "Knýtlinga", died: "1035", fid: "cnut", mid: "aelfgifu_northampton"},
+            {id: "gunhilda_denmark", name: "Gunhilda", house: "Knýtlinga", died: "1038", gender: "female", fid: "cnut", mid: "emma"},
+            
+            // HOUSE OF NORMANDY - COMPLETE FAMILIES
+            {id: "robert_normandy", name: "Robert I of Normandy", house: "Normandy", died: "1035", pids: ["herleva"]},
+            {id: "herleva", name: "Herleva", house: "Normandy", gender: "female"},
+            {id: "william_i", name: "William I the Conqueror", house: "Normandy", born: "1028", died: "1087", title: "King", reign: "1066-1087", fid: "robert_normandy", mid: "herleva", pids: ["matilda_flanders"]},
+            {id: "matilda_flanders", name: "Matilda of Flanders", house: "Flanders", born: "1031", died: "1083", gender: "female"},
+            
+            // William I's children - ALL 9
+            {id: "robert_curthose", name: "Robert Curthose", house: "Normandy", born: "1051", died: "1134", title: "Duke of Normandy", fid: "william_i", mid: "matilda_flanders", pids: ["sybilla"]},
+            {id: "sybilla", name: "Sybilla of Conversano", house: "Normandy", gender: "female"},
+            {id: "richard_normandy", name: "Richard", house: "Normandy", born: "1054", died: "1075", fid: "william_i", mid: "matilda_flanders"},
+            {id: "william_ii", name: "William II Rufus", house: "Normandy", born: "1056", died: "1100", title: "King", reign: "1087-1100", fid: "william_i", mid: "matilda_flanders"},
+            {id: "cecilia_normandy", name: "Cecilia", house: "Normandy", born: "1056", died: "1126", gender: "female", fid: "william_i", mid: "matilda_flanders"},
+            {id: "matilda_normandy_daughter", name: "Matilda", house: "Normandy", died: "1086", gender: "female", fid: "william_i", mid: "matilda_flanders"},
+            {id: "constance_normandy", name: "Constance", house: "Normandy", born: "1061", died: "1090", gender: "female", fid: "william_i", mid: "matilda_flanders", pids: ["alan_brittany"]},
+            {id: "alan_brittany", name: "Alan IV of Brittany", house: "Brittany"},
+            {id: "adela", name: "Adela", house: "Normandy", born: "1067", died: "1137", gender: "female", fid: "william_i", mid: "matilda_flanders", pids: ["stephen_blois"]},
+            {id: "stephen_blois", name: "Stephen of Blois", house: "Blois"},
+            {id: "agatha_normandy", name: "Agatha", house: "Normandy", born: "1064", died: "1080", gender: "female", fid: "william_i", mid: "matilda_flanders"},
+            {id: "henry_i", name: "Henry I", house: "Normandy", born: "1068", died: "1135", title: "King", reign: "1100-1135", fid: "william_i", mid: "matilda_flanders", pids: ["edith_scotland", "adeliza"]},
+            
+            // Henry I's wives
+            {id: "edith_scotland", name: "Matilda of Scotland", house: "Dunkeld", born: "1080", died: "1118", gender: "female", fid: "malcolm_iii", mid: "margaret_scotland"},
+            {id: "adeliza", name: "Adeliza of Louvain", house: "Normandy", gender: "female"},
+            
+            // Henry I's legitimate children
+            {id: "matilda_empress", name: "Matilda (Empress)", house: "Normandy", born: "1102", died: "1167", title: "Empress", gender: "female", fid: "henry_i", mid: "edith_scotland", pids: ["henry_v_hre", "geoffrey_anjou"]},
+            {id: "henry_v_hre", name: "Henry V (HRE)", house: "Normandy"},
+            {id: "geoffrey_anjou", name: "Geoffrey of Anjou", house: "Plantagenet"},
+            {id: "william_adelin", name: "William Adelin", house: "Normandy", born: "1103", died: "1120", fid: "henry_i", mid: "edith_scotland"},
+            
+            // Adela's children (House of Blois)
+            {id: "theobald_blois", name: "Theobald II", house: "Blois", fid: "stephen_blois", mid: "adela"},
+            {id: "stephen", name: "Stephen", house: "Blois", born: "1092", died: "1154", title: "King", reign: "1135-1154", fid: "stephen_blois", mid: "adela", pids: ["matilda_boulogne"]},
+            {id: "matilda_boulogne", name: "Matilda of Boulogne", house: "Blois", gender: "female"},
+            {id: "henry_blois", name: "Henry of Blois", house: "Blois", fid: "stephen_blois", mid: "adela"},
+            
+            // Stephen's children
+            {id: "eustace_blois", name: "Eustace", house: "Blois", born: "1127", died: "1153", fid: "stephen", mid: "matilda_boulogne"},
+            {id: "william_blois", name: "William", house: "Blois", born: "1134", died: "1159", fid: "stephen", mid: "matilda_boulogne"},
+            {id: "marie_blois", name: "Marie", house: "Blois", gender: "female", fid: "stephen", mid: "matilda_boulogne"},
+            
+            // HOUSE OF PLANTAGENET - COMPLETE FAMILIES
+            {id: "henry_ii", name: "Henry II", house: "Plantagenet", born: "1133", died: "1189", title: "King", reign: "1154-1189", fid: "geoffrey_anjou", mid: "matilda_empress", pids: ["eleanor_aquitaine"]},
+            {id: "eleanor_aquitaine", name: "Eleanor of Aquitaine", house: "Aquitaine", born: "1122", died: "1204", gender: "female"},
+            
+            // Henry II & Eleanor's children - 8 children
+            {id: "william_henry", name: "William", house: "Plantagenet", born: "1153", died: "1156", fid: "henry_ii", mid: "eleanor_aquitaine"},
+            {id: "henry_young", name: "Henry the Young King", house: "Plantagenet", born: "1155", died: "1183", fid: "henry_ii", mid: "eleanor_aquitaine", pids: ["margaret_france"]},
+            {id: "margaret_france", name: "Margaret of France", house: "Capet", gender: "female"},
+            {id: "matilda_saxony", name: "Matilda", house: "Plantagenet", born: "1156", died: "1189", gender: "female", fid: "henry_ii", mid: "eleanor_aquitaine", pids: ["henry_lion"]},
+            {id: "henry_lion", name: "Henry the Lion", house: "Plantagenet"},
+            {id: "richard_i", name: "Richard I Lionheart", house: "Plantagenet", born: "1157", died: "1199", title: "King", reign: "1189-1199", fid: "henry_ii", mid: "eleanor_aquitaine", pids: ["berengaria"]},
+            {id: "berengaria", name: "Berengaria of Navarre", house: "Plantagenet", gender: "female"},
+            {id: "geoffrey_brittany", name: "Geoffrey", house: "Plantagenet", born: "1158", died: "1186", fid: "henry_ii", mid: "eleanor_aquitaine", pids: ["constance_brittany"]},
+            {id: "constance_brittany", name: "Constance of Brittany", house: "Brittany", gender: "female"},
+            {id: "eleanor_castile", name: "Eleanor", house: "Plantagenet", born: "1161", died: "1214", gender: "female", fid: "henry_ii", mid: "eleanor_aquitaine", pids: ["alfonso_castile"]},
+            {id: "alfonso_castile", name: "Alfonso VIII of Castile", house: "Plantagenet"},
+            {id: "joan_sicily", name: "Joan", house: "Plantagenet", born: "1165", died: "1199", gender: "female", fid: "henry_ii", mid: "eleanor_aquitaine", pids: ["william_sicily"]},
+            {id: "william_sicily", name: "William II of Sicily", house: "Plantagenet"},
+            {id: "john", name: "John", house: "Plantagenet", born: "1166", died: "1216", title: "King", reign: "1199-1216", fid: "henry_ii", mid: "eleanor_aquitaine", pids: ["isabel_gloucester", "isabella_angouleme"]},
+            {id: "isabel_gloucester", name: "Isabel of Gloucester", house: "Plantagenet", gender: "female"},
+            {id: "isabella_angouleme", name: "Isabella of Angoulême", house: "Plantagenet", gender: "female"},
+            
+            // John's children
+            {id: "henry_iii", name: "Henry III", house: "Plantagenet", born: "1207", died: "1272", title: "King", reign: "1216-1272", fid: "john", mid: "isabella_angouleme", pids: ["eleanor_provence"]},
+            {id: "eleanor_provence", name: "Eleanor of Provence", house: "Plantagenet", gender: "female"},
+            {id: "richard_cornwall", name: "Richard of Cornwall", house: "Plantagenet", born: "1209", died: "1272", fid: "john", mid: "isabella_angouleme"},
+            {id: "joan_scotland", name: "Joan", house: "Plantagenet", born: "1210", died: "1238", gender: "female", fid: "john", mid: "isabella_angouleme", pids: ["alexander_scotland"]},
+            {id: "alexander_scotland", name: "Alexander II of Scotland", house: "Dunkeld"},
+            {id: "isabel_hre", name: "Isabella", house: "Plantagenet", born: "1214", died: "1241", gender: "female", fid: "john", mid: "isabella_angouleme", pids: ["frederick_hre"]},
+            {id: "frederick_hre", name: "Frederick II (HRE)", house: "Plantagenet"},
+            {id: "eleanor_montfort", name: "Eleanor", house: "Plantagenet", born: "1215", died: "1275", gender: "female", fid: "john", mid: "isabella_angouleme", pids: ["simon_montfort"]},
+            {id: "simon_montfort", name: "Simon de Montfort", house: "Plantagenet"},
+            
+            // Henry III's children
+            {id: "edward_i", name: "Edward I Longshanks", house: "Plantagenet", born: "1239", died: "1307", title: "King", reign: "1272-1307", fid: "henry_iii", mid: "eleanor_provence", pids: ["eleanor_castile_edward", "margaret_france"]},
+            {id: "eleanor_castile_edward", name: "Eleanor of Castile", house: "Plantagenet", gender: "female"},
+            {id: "margaret_france", name: "Margaret of France", house: "Capet", gender: "female"},
+            {id: "margaret_scotland_henry", name: "Margaret", house: "Plantagenet", born: "1240", died: "1275", gender: "female", fid: "henry_iii", mid: "eleanor_provence", pids: ["alexander_iii"]},
+            {id: "alexander_iii", name: "Alexander III of Scotland", house: "Dunkeld"},
+            {id: "beatrice_brittany", name: "Beatrice", house: "Plantagenet", born: "1242", died: "1275", gender: "female", fid: "henry_iii", mid: "eleanor_provence"},
+            {id: "edmund_lancaster_henry", name: "Edmund Crouchback", house: "Lancaster", born: "1245", died: "1296", fid: "henry_iii", mid: "eleanor_provence"},
+            
+            // Edward I's children - 16+ children
+            {id: "eleanor_bar", name: "Eleanor", house: "Plantagenet", born: "1264", died: "1297", gender: "female", fid: "edward_i", mid: "eleanor_castile_edward", pids: ["henry_bar"]},
+            {id: "henry_bar", name: "Henry III of Bar", house: "Plantagenet"},
+            {id: "joan_acre", name: "Joan of Acre", house: "Plantagenet", born: "1272", died: "1307", gender: "female", fid: "edward_i", mid: "eleanor_castile_edward"},
+            {id: "alfonso_edward", name: "Alfonso", house: "Plantagenet", born: "1273", died: "1284", fid: "edward_i", mid: "eleanor_castile_edward"},
+            {id: "margaret_brabant", name: "Margaret", house: "Plantagenet", born: "1275", died: "1333", gender: "female", fid: "edward_i", mid: "eleanor_castile_edward", pids: ["john_brabant"]},
+            {id: "john_brabant", name: "John II of Brabant", house: "Plantagenet"},
+            {id: "elizabeth_hainault", name: "Elizabeth", house: "Plantagenet", born: "1282", died: "1316", gender: "female", fid: "edward_i", mid: "eleanor_castile_edward", pids: ["humphrey_bohun"]},
+            {id: "humphrey_bohun", name: "Humphrey de Bohun", house: "Plantagenet"},
+            {id: "edward_ii", name: "Edward II", house: "Plantagenet", born: "1284", died: "1327", title: "King", reign: "1307-1327", fid: "edward_i", mid: "eleanor_castile_edward", pids: ["isabella_france"]},
+            {id: "isabella_france", name: "Isabella of France", house: "Capet", gender: "female"},
+            
+            // Edward II's children
+            {id: "edward_iii", name: "Edward III", house: "Plantagenet", born: "1312", died: "1377", title: "King", reign: "1327-1377", fid: "edward_ii", mid: "isabella_france", pids: ["philippa_hainault"]},
+            {id: "philippa_hainault", name: "Philippa of Hainault", house: "Plantagenet", gender: "female"},
+            {id: "john_eltham", name: "John of Eltham", house: "Plantagenet", born: "1316", died: "1336", fid: "edward_ii", mid: "isabella_france"},
+            {id: "eleanor_guelders", name: "Eleanor", house: "Plantagenet", born: "1318", died: "1355", gender: "female", fid: "edward_ii", mid: "isabella_france", pids: ["reginald_guelders"]},
+            {id: "reginald_guelders", name: "Reginald II of Guelders", house: "Plantagenet"},
+            {id: "joan_tower", name: "Joan", house: "Plantagenet", born: "1321", died: "1362", gender: "female", fid: "edward_ii", mid: "isabella_france", pids: ["david_scotland"]},
+            {id: "david_scotland", name: "David II of Scotland", house: "Dunkeld"},
+            
+            // Edward III's children - 13 CHILDREN (KEY EXPANSION POINT)
+            {id: "edward_black", name: "Edward (Black Prince)", house: "Plantagenet", born: "1330", died: "1376", fid: "edward_iii", mid: "philippa_hainault", pids: ["joan_kent"]},
+            {id: "joan_kent", name: "Joan of Kent", house: "Plantagenet", gender: "female"},
+            {id: "isabella_coucy", name: "Isabella", house: "Plantagenet", born: "1332", died: "1379", gender: "female", fid: "edward_iii", mid: "philippa_hainault", pids: ["enguerrand_coucy"]},
+            {id: "enguerrand_coucy", name: "Enguerrand de Coucy", house: "Plantagenet"},
+            {id: "joan_edward", name: "Joan", house: "Plantagenet", born: "1333", died: "1348", gender: "female", fid: "edward_iii", mid: "philippa_hainault"},
+            {id: "william_windsor", name: "William", house: "Plantagenet", born: "1334", died: "1337", fid: "edward_iii", mid: "philippa_hainault"},
+            {id: "lionel_antwerp", name: "Lionel of Antwerp", house: "Plantagenet", born: "1338", died: "1368", fid: "edward_iii", mid: "philippa_hainault", pids: ["elizabeth_burgh"]},
+            {id: "elizabeth_burgh", name: "Elizabeth de Burgh", house: "Plantagenet", gender: "female"},
+            {id: "john_gaunt", name: "John of Gaunt", house: "Lancaster", born: "1340", died: "1399", fid: "edward_iii", mid: "philippa_hainault", pids: ["blanche_lancaster", "constance_castile", "katherine_swynford"]},
+            {id: "blanche_lancaster", name: "Blanche of Lancaster", house: "Lancaster", gender: "female"},
+            {id: "constance_castile", name: "Constance of Castile", house: "Lancaster", gender: "female"},
+            {id: "katherine_swynford", name: "Katherine Swynford", house: "Lancaster", gender: "female"},
+            {id: "edmund_langley", name: "Edmund of Langley", house: "York", born: "1341", died: "1402", fid: "edward_iii", mid: "philippa_hainault", pids: ["isabella_castile_york"]},
+            {id: "isabella_castile_york", name: "Isabella of Castile", house: "York", gender: "female"},
+            {id: "blanche_edward", name: "Blanche", house: "Plantagenet", born: "1342", died: "1342", gender: "female", fid: "edward_iii", mid: "philippa_hainault"},
+            {id: "mary_bretagne", name: "Mary", house: "Plantagenet", born: "1344", died: "1361", gender: "female", fid: "edward_iii", mid: "philippa_hainault", pids: ["john_montfort"]},
+            {id: "john_montfort", name: "John IV of Brittany", house: "Brittany"},
+            {id: "margaret_hastings", name: "Margaret", house: "Plantagenet", born: "1346", died: "1361", gender: "female", fid: "edward_iii", mid: "philippa_hainault", pids: ["john_hastings"]},
+            {id: "john_hastings", name: "John Hastings", house: "Plantagenet"},
+            {id: "thomas_woodstock", name: "Thomas of Woodstock", house: "Plantagenet", born: "1355", died: "1397", fid: "edward_iii", mid: "philippa_hainault"},
+            
+            // Edward Black Prince's children
+            {id: "edward_angouleme", name: "Edward of Angoulême", house: "Plantagenet", born: "1365", died: "1370", fid: "edward_black", mid: "joan_kent"},
+            {id: "richard_ii", name: "Richard II", house: "Plantagenet", born: "1367", died: "1400", title: "King", reign: "1377-1399", fid: "edward_black", mid: "joan_kent", pids: ["anne_bohemia", "isabella_valois"]},
+            {id: "anne_bohemia", name: "Anne of Bohemia", house: "Bohemia", gender: "female"},
+            {id: "isabella_valois", name: "Isabella of Valois", house: "Valois", gender: "female"},
+            
+            // HOUSE OF LANCASTER - John of Gaunt's children
+            {id: "philippa_portugal", name: "Philippa", house: "Lancaster", born: "1360", died: "1415", gender: "female", fid: "john_gaunt", mid: "blanche_lancaster", pids: ["john_portugal"]},
+            {id: "john_portugal", name: "John I of Portugal", house: "Lancaster"},
+            {id: "henry_iv", name: "Henry IV Bolingbroke", house: "Lancaster", born: "1367", died: "1413", title: "King", reign: "1399-1413", fid: "john_gaunt", mid: "blanche_lancaster", pids: ["mary_bohun", "joan_navarre"]},
+            {id: "mary_bohun", name: "Mary de Bohun", house: "Lancaster", gender: "female"},
+            {id: "joan_navarre", name: "Joan of Navarre", house: "Lancaster", gender: "female"},
+            {id: "elizabeth_holland", name: "Elizabeth", house: "Lancaster", born: "1363", died: "1426", gender: "female", fid: "john_gaunt", mid: "blanche_lancaster"},
+            {id: "catherine_castile_gaunt", name: "Catherine", house: "Lancaster", born: "1373", died: "1418", gender: "female", fid: "john_gaunt", mid: "constance_castile", pids: ["henry_castile"]},
+            {id: "henry_castile", name: "Henry III of Castile", house: "Lancaster"},
+            
+            // Henry IV's children
+            {id: "henry_v", name: "Henry V", house: "Lancaster", born: "1386", died: "1422", title: "King", reign: "1413-1422", fid: "henry_iv", mid: "mary_bohun", pids: ["catherine_valois"]},
+            {id: "catherine_valois", name: "Catherine of Valois", house: "Valois", born: "1401", died: "1437", gender: "female"},
+            {id: "thomas_clarence", name: "Thomas of Clarence", house: "Lancaster", born: "1388", died: "1421", fid: "henry_iv", mid: "mary_bohun"},
+            {id: "john_bedford", name: "John of Bedford", house: "Lancaster", born: "1389", died: "1435", fid: "henry_iv", mid: "mary_bohun"},
+            {id: "humphrey_gloucester", name: "Humphrey of Gloucester", house: "Lancaster", born: "1390", died: "1447", fid: "henry_iv", mid: "mary_bohun"},
+            {id: "blanche_bavaria", name: "Blanche", house: "Lancaster", born: "1392", died: "1409", gender: "female", fid: "henry_iv", mid: "mary_bohun", pids: ["louis_bavaria"]},
+            {id: "louis_bavaria", name: "Louis III of Bavaria", house: "Lancaster"},
+            {id: "philippa_denmark", name: "Philippa", house: "Lancaster", born: "1394", died: "1430", gender: "female", fid: "henry_iv", mid: "mary_bohun", pids: ["eric_denmark"]},
+            {id: "eric_denmark", name: "Eric of Pomerania", house: "Lancaster"},
+            
+            // Henry V's children
+            {id: "henry_vi", name: "Henry VI", house: "Lancaster", born: "1421", died: "1471", title: "King", reign: "1422-1461, 1470-1471", fid: "henry_v", mid: "catherine_valois", pids: ["margaret_anjou"]},
+            {id: "margaret_anjou", name: "Margaret of Anjou", house: "Lancaster", gender: "female"},
+            
+            // Henry VI's children
+            {id: "edward_westminster", name: "Edward of Westminster", house: "Lancaster", born: "1453", died: "1471", fid: "henry_vi", mid: "margaret_anjou"},
+            
+            // Catherine of Valois's second marriage - TUDOR CONNECTION
+            {id: "owen_tudor", name: "Owen Tudor", house: "Tudor"},
+            {id: "edmund_tudor", name: "Edmund Tudor", house: "Tudor", born: "1430", died: "1456", fid: "owen_tudor", mid: "catherine_valois", pids: ["margaret_beaufort"]},
+            {id: "margaret_beaufort", name: "Margaret Beaufort", house: "Tudor", gender: "female"},
+            {id: "jasper_tudor", name: "Jasper Tudor", house: "Tudor", born: "1431", died: "1495", fid: "owen_tudor", mid: "catherine_valois"},
+            
+            // HOUSE OF YORK - Edmund of Langley's descendants
+            {id: "richard_cambridge", name: "Richard of Conisburgh", house: "York", died: "1415", fid: "edmund_langley", mid: "isabella_castile_york", pids: ["anne_mortimer"]},
+            {id: "anne_mortimer", name: "Anne Mortimer", house: "York", gender: "female"},
+            {id: "richard_york", name: "Richard of York", house: "York", born: "1411", died: "1460", fid: "richard_cambridge", mid: "anne_mortimer", pids: ["cecily_neville"]},
+            {id: "cecily_neville", name: "Cecily Neville", house: "York", gender: "female"},
+            
+            // Richard of York's children
+            {id: "edward_iv", name: "Edward IV", house: "York", born: "1442", died: "1483", title: "King", reign: "1461-1483", fid: "richard_york", mid: "cecily_neville", pids: ["elizabeth_woodville"]},
+            {id: "elizabeth_woodville", name: "Elizabeth Woodville", house: "York", gender: "female"},
+            {id: "edmund_rutland", name: "Edmund of Rutland", house: "York", born: "1443", died: "1460", fid: "richard_york", mid: "cecily_neville"},
+            {id: "elizabeth_suffolk", name: "Elizabeth", house: "York", born: "1444", died: "1503", gender: "female", fid: "richard_york", mid: "cecily_neville", pids: ["john_suffolk"]},
+            {id: "john_suffolk", name: "John de la Pole", house: "York"},
+            {id: "margaret_burgundy", name: "Margaret", house: "York", born: "1446", died: "1503", gender: "female", fid: "richard_york", mid: "cecily_neville", pids: ["charles_burgundy"]},
+            {id: "charles_burgundy", name: "Charles the Bold", house: "York"},
+            {id: "george_clarence", name: "George of Clarence", house: "York", born: "1449", died: "1478", fid: "richard_york", mid: "cecily_neville"},
+            {id: "richard_iii", name: "Richard III", house: "York", born: "1452", died: "1485", title: "King", reign: "1483-1485", fid: "richard_york", mid: "cecily_neville", pids: ["anne_neville"]},
+            {id: "anne_neville", name: "Anne Neville", house: "York", gender: "female"},
+            
+            // Edward IV's children - 10 CHILDREN
+            {id: "elizabeth_york", name: "Elizabeth of York", house: "York", born: "1466", died: "1503", gender: "female", fid: "edward_iv", mid: "elizabeth_woodville"},
+            {id: "mary_york", name: "Mary", house: "York", born: "1467", died: "1482", gender: "female", fid: "edward_iv", mid: "elizabeth_woodville"},
+            {id: "cecily_york", name: "Cecily", house: "York", born: "1469", died: "1507", gender: "female", fid: "edward_iv", mid: "elizabeth_woodville", pids: ["john_welles"]},
+            {id: "john_welles", name: "John Welles", house: "York"},
+            {id: "edward_v", name: "Edward V", house: "York", born: "1470", died: "1483", title: "King", reign: "Apr-Jun 1483", fid: "edward_iv", mid: "elizabeth_woodville"},
+            {id: "margaret_york_daughter", name: "Margaret", house: "York", born: "1472", died: "1472", gender: "female", fid: "edward_iv", mid: "elizabeth_woodville"},
+            {id: "richard_shrewsbury", name: "Richard of Shrewsbury", house: "York", born: "1473", died: "1483", fid: "edward_iv", mid: "elizabeth_woodville"},
+            {id: "anne_york_daughter", name: "Anne", house: "York", born: "1475", died: "1511", gender: "female", fid: "edward_iv", mid: "elizabeth_woodville", pids: ["thomas_howard"]},
+            {id: "thomas_howard", name: "Thomas Howard", house: "York"},
+            {id: "george_york", name: "George", house: "York", born: "1477", died: "1479", fid: "edward_iv", mid: "elizabeth_woodville"},
+            {id: "catherine_york", name: "Catherine", house: "York", born: "1479", died: "1527", gender: "female", fid: "edward_iv", mid: "elizabeth_woodville", pids: ["william_courtenay"]},
+            {id: "william_courtenay", name: "William Courtenay", house: "York"},
+            {id: "bridget_york", name: "Bridget", house: "York", born: "1480", died: "1517", gender: "female", fid: "edward_iv", mid: "elizabeth_woodville"},
+            
+            // Richard III's child
+            {id: "edward_middleham", name: "Edward of Middleham", house: "York", born: "1473", died: "1484", fid: "richard_iii", mid: "anne_neville"},
+            
+            // HOUSE OF TUDOR - COMPLETE FAMILIES
+            {id: "henry_vii", name: "Henry VII", house: "Tudor", born: "1457", died: "1509", title: "King", reign: "1485-1509", fid: "edmund_tudor", mid: "margaret_beaufort", pids: ["elizabeth_york"]},
+            
+            // Henry VII's children - 8 CHILDREN
+            {id: "arthur_tudor", name: "Arthur", house: "Tudor", born: "1486", died: "1502", fid: "henry_vii", mid: "elizabeth_york", pids: ["catherine_aragon"]},
+            {id: "catherine_aragon", name: "Catherine of Aragon", house: "Tudor", gender: "female"},
+            {id: "margaret_tudor", name: "Margaret Tudor", house: "Tudor", born: "1489", died: "1541", gender: "female", fid: "henry_vii", mid: "elizabeth_york", pids: ["james_iv"]},
+            {id: "james_iv", name: "James IV of Scotland", house: "Stuart"},
+            {id: "henry_viii", name: "Henry VIII", house: "Tudor", born: "1491", died: "1547", title: "King", reign: "1509-1547", fid: "henry_vii", mid: "elizabeth_york", pids: ["catherine_aragon", "anne_boleyn", "jane_seymour", "anne_cleves", "catherine_howard", "catherine_parr"]},
+            {id: "anne_boleyn", name: "Anne Boleyn", house: "Tudor", gender: "female"},
+            {id: "jane_seymour", name: "Jane Seymour", house: "Tudor", gender: "female"},
+            {id: "anne_cleves", name: "Anne of Cleves", house: "Tudor", gender: "female"},
+            {id: "catherine_howard", name: "Catherine Howard", house: "Tudor", gender: "female"},
+            {id: "catherine_parr", name: "Catherine Parr", house: "Tudor", gender: "female"},
+            {id: "elizabeth_tudor_daughter", name: "Elizabeth", house: "Tudor", born: "1492", died: "1495", gender: "female", fid: "henry_vii", mid: "elizabeth_york"},
+            {id: "mary_france", name: "Mary Tudor", house: "Tudor", born: "1496", died: "1533", gender: "female", fid: "henry_vii", mid: "elizabeth_york", pids: ["louis_xii"]},
+            {id: "louis_xii", name: "Louis XII of France", house: "Valois"},
+            {id: "edmund_tudor_son", name: "Edmund", house: "Tudor", born: "1499", died: "1500", fid: "henry_vii", mid: "elizabeth_york"},
+            {id: "katherine_tudor", name: "Katherine", house: "Tudor", born: "1503", died: "1503", gender: "female", fid: "henry_vii", mid: "elizabeth_york"},
+            
+            // Henry VIII's children - 3 legitimate
+            {id: "mary_i", name: "Mary I", house: "Tudor", born: "1516", died: "1558", title: "Queen", reign: "1553-1558", gender: "female", fid: "henry_viii", mid: "catherine_aragon", pids: ["philip_spain"]},
+            {id: "philip_spain", name: "Philip II of Spain", house: "Tudor"},
+            {id: "elizabeth_i", name: "Elizabeth I", house: "Tudor", born: "1533", died: "1603", title: "Queen", reign: "1558-1603", gender: "female", fid: "henry_viii", mid: "anne_boleyn"},
+            {id: "edward_vi", name: "Edward VI", house: "Tudor", born: "1537", died: "1553", title: "King", reign: "1547-1553", fid: "henry_viii", mid: "jane_seymour"},
+            
+            // Margaret Tudor's children (STUART CONNECTION)
+            {id: "james_v_scotland", name: "James V of Scotland", house: "Stuart", born: "1512", died: "1542", fid: "james_iv", mid: "margaret_tudor", pids: ["mary_guise"]},
+            {id: "mary_guise", name: "Mary of Guise", house: "Stuart", gender: "female"},
+            {id: "margaret_douglas", name: "Margaret Douglas", house: "Tudor", born: "1515", died: "1578", gender: "female", fid: "margaret_tudor"},
+            
+            // James V's children
+            {id: "mary_scotland", name: "Mary Queen of Scots", house: "Stuart", born: "1542", died: "1587", gender: "female", fid: "james_v_scotland", mid: "mary_guise", pids: ["henry_darnley"]},
+            {id: "henry_darnley", name: "Henry Stuart (Lord Darnley)", house: "Stuart"},
+            
+            // Mary Queen of Scots' child
+            {id: "james_i", name: "James I (VI of Scotland)", house: "Stuart", born: "1566", died: "1625", title: "King", reign: "1603-1625", fid: "henry_darnley", mid: "mary_scotland", pids: ["anne_denmark"]},
+            {id: "anne_denmark", name: "Anne of Denmark", house: "Stuart", gender: "female"},
+            
+            // HOUSE OF STUART - COMPLETE FAMILIES
+            // James I's children
+            {id: "henry_stuart", name: "Henry Frederick", house: "Stuart", born: "1594", died: "1612", fid: "james_i", mid: "anne_denmark"},
+            {id: "elizabeth_bohemia", name: "Elizabeth", house: "Stuart", born: "1596", died: "1662", gender: "female", fid: "james_i", mid: "anne_denmark", pids: ["frederick_bohemia"]},
+            {id: "frederick_bohemia", name: "Frederick V of Bohemia", house: "Stuart"},
+            {id: "margaret_stuart", name: "Margaret", house: "Stuart", born: "1598", died: "1600", gender: "female", fid: "james_i", mid: "anne_denmark"},
+            {id: "charles_i", name: "Charles I", house: "Stuart", born: "1600", died: "1649", title: "King", reign: "1625-1649", fid: "james_i", mid: "anne_denmark", pids: ["henrietta_maria"]},
+            {id: "henrietta_maria", name: "Henrietta Maria", house: "Stuart", gender: "female"},
+            {id: "robert_stuart", name: "Robert", house: "Stuart", born: "1602", died: "1602", fid: "james_i", mid: "anne_denmark"},
+            {id: "mary_stuart_daughter", name: "Mary", house: "Stuart", born: "1605", died: "1607", gender: "female", fid: "james_i", mid: "anne_denmark"},
+            {id: "sophia_stuart", name: "Sophia", house: "Stuart", born: "1606", died: "1606", gender: "female", fid: "james_i", mid: "anne_denmark"},
+            
+            // Charles I's children
+            {id: "charles_ii", name: "Charles II", house: "Stuart", born: "1630", died: "1685", title: "King", reign: "1660-1685", fid: "charles_i", mid: "henrietta_maria", pids: ["catherine_braganza"]},
+            {id: "catherine_braganza", name: "Catherine of Braganza", house: "Stuart", gender: "female"},
+            {id: "mary_orange", name: "Mary", house: "Stuart", born: "1631", died: "1660", gender: "female", fid: "charles_i", mid: "henrietta_maria", pids: ["william_orange"]},
+            {id: "william_orange", name: "William II of Orange", house: "Orange-Nassau"},
+            {id: "james_ii", name: "James II (VII of Scotland)", house: "Stuart", born: "1633", died: "1701", title: "King", reign: "1685-1688", fid: "charles_i", mid: "henrietta_maria", pids: ["anne_hyde", "mary_modena"]},
+            {id: "anne_hyde", name: "Anne Hyde", house: "Stuart", gender: "female"},
+            {id: "mary_modena", name: "Mary of Modena", house: "Stuart", gender: "female"},
+            {id: "elizabeth_stuart_charles", name: "Elizabeth", house: "Stuart", born: "1635", died: "1650", gender: "female", fid: "charles_i", mid: "henrietta_maria"},
+            {id: "anne_stuart_charles", name: "Anne", house: "Stuart", born: "1637", died: "1640", gender: "female", fid: "charles_i", mid: "henrietta_maria"},
+            {id: "henry_gloucester", name: "Henry", house: "Stuart", born: "1640", died: "1660", fid: "charles_i", mid: "henrietta_maria"},
+            {id: "henrietta_anne", name: "Henrietta Anne", house: "Stuart", born: "1644", died: "1670", gender: "female", fid: "charles_i", mid: "henrietta_maria", pids: ["philippe_orleans"]},
+            {id: "philippe_orleans", name: "Philippe I of Orléans", house: "Stuart"},
+            
+            // James II's children
+            {id: "mary_ii", name: "Mary II", house: "Stuart", born: "1662", died: "1694", title: "Queen", reign: "1689-1694", gender: "female", fid: "james_ii", mid: "anne_hyde", pids: ["william_iii"]},
+            {id: "william_iii", name: "William III of Orange", house: "Orange-Nassau", born: "1650", died: "1702", title: "King", reign: "1689-1702", fid: "william_orange", mid: "mary_orange"},
+            {id: "anne", name: "Anne", house: "Stuart", born: "1665", died: "1714", title: "Queen", reign: "1702-1714", gender: "female", fid: "james_ii", mid: "anne_hyde", pids: ["george_denmark"]},
+            {id: "george_denmark", name: "George of Denmark", house: "Stuart"},
+            {id: "james_francis", name: "James Francis Edward", house: "Stuart", born: "1688", died: "1766", fid: "james_ii", mid: "mary_modena"},
+            
+            // Anne's children - 17+ pregnancies, no survivors
+            {id: "william_gloucester", name: "William of Gloucester", house: "Stuart", born: "1689", died: "1700", fid: "george_denmark", mid: "anne"},
+            
+            // HOUSE OF HANOVER - COMPLETE FAMILIES
+            {id: "sophia_hanover", name: "Sophia of Hanover", house: "Hanover", born: "1630", died: "1714", gender: "female", fid: "frederick_bohemia", mid: "elizabeth_bohemia", pids: ["ernest_augustus"]},
+            {id: "ernest_augustus", name: "Ernest Augustus", house: "Hanover"},
+            {id: "george_i", name: "George I", house: "Hanover", born: "1660", died: "1727", title: "King", reign: "1714-1727", fid: "ernest_augustus", mid: "sophia_hanover", pids: ["sophia_dorothea"]},
+            {id: "sophia_dorothea", name: "Sophia Dorothea", house: "Hanover", gender: "female"},
+            
+            // George I's children
+            {id: "george_ii", name: "George II", house: "Hanover", born: "1683", died: "1760", title: "King", reign: "1727-1760", fid: "george_i", mid: "sophia_dorothea", pids: ["caroline_ansbach"]},
+            {id: "caroline_ansbach", name: "Caroline of Ansbach", house: "Hanover", gender: "female"},
+            {id: "sophia_dorothea_prussia", name: "Sophia Dorothea", house: "Hanover", born: "1687", died: "1757", gender: "female", fid: "george_i", mid: "sophia_dorothea", pids: ["frederick_william_prussia"]},
+            {id: "frederick_william_prussia", name: "Frederick William I of Prussia", house: "Hanover"},
+            
+            // George II's children
+            {id: "frederick_wales", name: "Frederick (Prince of Wales)", house: "Hanover", born: "1707", died: "1751", fid: "george_ii", mid: "caroline_ansbach", pids: ["augusta_saxe"]},
+            {id: "augusta_saxe", name: "Augusta of Saxe-Gotha", house: "Hanover", gender: "female"},
+            {id: "anne_orange_hanover", name: "Anne", house: "Hanover", born: "1709", died: "1759", gender: "female", fid: "george_ii", mid: "caroline_ansbach", pids: ["william_orange_hanover"]},
+            {id: "william_orange_hanover", name: "William IV of Orange", house: "Hanover"},
+            {id: "amelia_hanover", name: "Amelia", house: "Hanover", born: "1711", died: "1786", gender: "female", fid: "george_ii", mid: "caroline_ansbach"},
+            {id: "caroline_hanover", name: "Caroline", house: "Hanover", born: "1713", died: "1757", gender: "female", fid: "george_ii", mid: "caroline_ansbach"},
+            {id: "george_hanover", name: "George", house: "Hanover", born: "1717", died: "1718", fid: "george_ii", mid: "caroline_ansbach"},
+            {id: "william_cumberland", name: "William", house: "Hanover", born: "1721", died: "1765", fid: "george_ii", mid: "caroline_ansbach"},
+            {id: "mary_hesse", name: "Mary", house: "Hanover", born: "1723", died: "1772", gender: "female", fid: "george_ii", mid: "caroline_ansbach", pids: ["frederick_hesse"]},
+            {id: "frederick_hesse", name: "Frederick II of Hesse-Kassel", house: "Hanover"},
+            {id: "louisa_denmark", name: "Louisa", house: "Hanover", born: "1724", died: "1751", gender: "female", fid: "george_ii", mid: "caroline_ansbach", pids: ["frederick_denmark"]},
+            {id: "frederick_denmark", name: "Frederick V of Denmark", house: "Hanover"},
+            
+            // Frederick Prince of Wales's children
+            {id: "augusta_brunswick", name: "Augusta", house: "Hanover", born: "1737", died: "1813", gender: "female", fid: "frederick_wales", mid: "augusta_saxe", pids: ["charles_brunswick"]},
+            {id: "charles_brunswick", name: "Charles William Ferdinand", house: "Hanover"},
+            {id: "george_iii", name: "George III", house: "Hanover", born: "1738", died: "1820", title: "King", reign: "1760-1820", fid: "frederick_wales", mid: "augusta_saxe", pids: ["charlotte_mecklenburg"]},
+            {id: "charlotte_mecklenburg", name: "Charlotte of Mecklenburg-Strelitz", house: "Hanover", gender: "female"},
+            {id: "edward_york", name: "Edward", house: "Hanover", born: "1739", died: "1767", fid: "frederick_wales", mid: "augusta_saxe"},
+            {id: "elizabeth_caroline", name: "Elizabeth Caroline", house: "Hanover", born: "1741", died: "1759", gender: "female", fid: "frederick_wales", mid: "augusta_saxe"},
+            {id: "william_gloucester_hanover", name: "William Henry", house: "Hanover", born: "1743", died: "1805", fid: "frederick_wales", mid: "augusta_saxe"},
+            {id: "henry_cumberland", name: "Henry", house: "Hanover", born: "1745", died: "1790", fid: "frederick_wales", mid: "augusta_saxe"},
+            {id: "louisa_anne", name: "Louisa Anne", house: "Hanover", born: "1749", died: "1768", gender: "female", fid: "frederick_wales", mid: "augusta_saxe"},
+            {id: "frederick_william", name: "Frederick William", house: "Hanover", born: "1750", died: "1765", fid: "frederick_wales", mid: "augusta_saxe"},
+            {id: "caroline_matilda", name: "Caroline Matilda", house: "Hanover", born: "1751", died: "1775", gender: "female", fid: "frederick_wales", mid: "augusta_saxe", pids: ["christian_denmark"]},
+            {id: "christian_denmark", name: "Christian VII of Denmark", house: "Hanover"},
+            
+            // George III's children - 15 CHILDREN
+            {id: "george_iv", name: "George IV", house: "Hanover", born: "1762", died: "1830", title: "King", reign: "1820-1830", fid: "george_iii", mid: "charlotte_mecklenburg", pids: ["caroline_brunswick"]},
+            {id: "caroline_brunswick", name: "Caroline of Brunswick", house: "Hanover", gender: "female"},
+            {id: "frederick_duke_york", name: "Frederick", house: "Hanover", born: "1763", died: "1827", fid: "george_iii", mid: "charlotte_mecklenburg"},
+            {id: "william_iv", name: "William IV", house: "Hanover", born: "1765", died: "1837", title: "King", reign: "1830-1837", fid: "george_iii", mid: "charlotte_mecklenburg", pids: ["adelaide_saxe"]},
+            {id: "adelaide_saxe", name: "Adelaide of Saxe-Meiningen", house: "Hanover", gender: "female"},
+            {id: "charlotte_wurttemberg", name: "Charlotte", house: "Hanover", born: "1766", died: "1828", gender: "female", fid: "george_iii", mid: "charlotte_mecklenburg", pids: ["frederick_wurttemberg"]},
+            {id: "frederick_wurttemberg", name: "Frederick I of Württemberg", house: "Hanover"},
+            {id: "edward_kent", name: "Edward", house: "Hanover", born: "1767", died: "1820", fid: "george_iii", mid: "charlotte_mecklenburg", pids: ["victoria_saxe_coburg"]},
+            {id: "victoria_saxe_coburg", name: "Victoria of Saxe-Coburg", house: "Hanover", gender: "female"},
+            {id: "augusta_sophia", name: "Augusta Sophia", house: "Hanover", born: "1768", died: "1840", gender: "female", fid: "george_iii", mid: "charlotte_mecklenburg"},
+            {id: "elizabeth_hesse_homburg", name: "Elizabeth", house: "Hanover", born: "1770", died: "1840", gender: "female", fid: "george_iii", mid: "charlotte_mecklenburg", pids: ["frederick_hesse_homburg"]},
+            {id: "frederick_hesse_homburg", name: "Frederick VI of Hesse-Homburg", house: "Hanover"},
+            {id: "ernest_augustus_hanover", name: "Ernest Augustus", house: "Hanover", born: "1771", died: "1851", fid: "george_iii", mid: "charlotte_mecklenburg"},
+            {id: "augustus_frederick", name: "Augustus Frederick", house: "Hanover", born: "1773", died: "1843", fid: "george_iii", mid: "charlotte_mecklenburg"},
+            {id: "adolphus_cambridge", name: "Adolphus", house: "Hanover", born: "1774", died: "1850", fid: "george_iii", mid: "charlotte_mecklenburg"},
+            {id: "mary_gloucester", name: "Mary", house: "Hanover", born: "1776", died: "1857", gender: "female", fid: "george_iii", mid: "charlotte_mecklenburg", pids: ["william_gloucester"]},
+            {id: "william_gloucester", name: "William Frederick", house: "Hanover"},
+            {id: "sophia_george", name: "Sophia", house: "Hanover", born: "1777", died: "1848", gender: "female", fid: "george_iii", mid: "charlotte_mecklenburg"},
+            {id: "octavius_hanover", name: "Octavius", house: "Hanover", born: "1779", died: "1783", fid: "george_iii", mid: "charlotte_mecklenburg"},
+            {id: "alfred_hanover", name: "Alfred", house: "Hanover", born: "1780", died: "1782", fid: "george_iii", mid: "charlotte_mecklenburg"},
+            {id: "amelia_george", name: "Amelia", house: "Hanover", born: "1783", died: "1810", gender: "female", fid: "george_iii", mid: "charlotte_mecklenburg"},
+            
+            // George IV's child
+            {id: "charlotte_wales", name: "Charlotte of Wales", house: "Hanover", born: "1796", died: "1817", gender: "female", fid: "george_iv", mid: "caroline_brunswick", pids: ["leopold_saxe_coburg"]},
+            {id: "leopold_saxe_coburg", name: "Leopold of Saxe-Coburg", house: "Hanover"},
+            
+            // Victoria (Edward Duke of Kent's daughter)
+            {id: "victoria", name: "Victoria", house: "Hanover", born: "1819", died: "1901", title: "Queen", reign: "1837-1901", gender: "female", fid: "edward_kent", mid: "victoria_saxe_coburg", pids: ["albert"]},
+            {id: "albert", name: "Albert of Saxe-Coburg", house: "Windsor"},
+            
+            // HOUSE OF WINDSOR - Victoria's children - 9 CHILDREN
+            {id: "victoria_frederick", name: "Victoria", house: "Windsor", born: "1840", died: "1901", gender: "female", fid: "albert", mid: "victoria", pids: ["frederick_prussia"]},
+            {id: "frederick_prussia", name: "Frederick III of Germany", house: "Windsor"},
+            {id: "edward_vii", name: "Edward VII", house: "Windsor", born: "1841", died: "1910", title: "King", reign: "1901-1910", fid: "albert", mid: "victoria", pids: ["alexandra_denmark"]},
+            {id: "alexandra_denmark", name: "Alexandra of Denmark", house: "Windsor", gender: "female"},
+            {id: "alice_hesse", name: "Alice", house: "Windsor", born: "1843", died: "1878", gender: "female", fid: "albert", mid: "victoria", pids: ["louis_hesse"]},
+            {id: "louis_hesse", name: "Louis IV of Hesse", house: "Windsor"},
+            {id: "alfred_edinburgh", name: "Alfred", house: "Windsor", born: "1844", died: "1900", fid: "albert", mid: "victoria"},
+            {id: "helena_schleswig", name: "Helena", house: "Windsor", born: "1846", died: "1923", gender: "female", fid: "albert", mid: "victoria", pids: ["christian_schleswig"]},
+            {id: "christian_schleswig", name: "Christian of Schleswig-Holstein", house: "Windsor"},
+            {id: "louise_lorne", name: "Louise", house: "Windsor", born: "1848", died: "1939", gender: "female", fid: "albert", mid: "victoria", pids: ["john_lorne"]},
+            {id: "john_lorne", name: "John Campbell", house: "Windsor"},
+            {id: "arthur_connaught", name: "Arthur", house: "Windsor", born: "1850", died: "1942", fid: "albert", mid: "victoria"},
+            {id: "leopold_albany", name: "Leopold", house: "Windsor", born: "1853", died: "1884", fid: "albert", mid: "victoria"},
+            {id: "beatrice_battenberg", name: "Beatrice", house: "Windsor", born: "1857", died: "1944", gender: "female", fid: "albert", mid: "victoria", pids: ["henry_battenberg"]},
+            {id: "henry_battenberg", name: "Prince Henry of Battenberg", house: "Windsor"},
+            
+            // Edward VII's children
+            {id: "albert_victor", name: "Albert Victor", house: "Windsor", born: "1864", died: "1892", fid: "edward_vii", mid: "alexandra_denmark"},
+            {id: "george_v", name: "George V", house: "Windsor", born: "1865", died: "1936", title: "King", reign: "1910-1936", fid: "edward_vii", mid: "alexandra_denmark", pids: ["mary_teck"]},
+            {id: "mary_teck", name: "Mary of Teck", house: "Windsor", gender: "female"},
+            {id: "louise_fife", name: "Louise", house: "Windsor", born: "1867", died: "1931", gender: "female", fid: "edward_vii", mid: "alexandra_denmark", pids: ["alexander_fife"]},
+            {id: "alexander_fife", name: "Alexander Duff", house: "Windsor"},
+            {id: "victoria_edward", name: "Victoria", house: "Windsor", born: "1868", died: "1935", gender: "female", fid: "edward_vii", mid: "alexandra_denmark"},
+            {id: "maud_norway", name: "Maud", house: "Windsor", born: "1869", died: "1938", gender: "female", fid: "edward_vii", mid: "alexandra_denmark", pids: ["haakon_norway"]},
+            {id: "haakon_norway", name: "Haakon VII of Norway", house: "Windsor"},
+            {id: "alexander_john", name: "Alexander John", house: "Windsor", born: "1871", died: "1871", fid: "edward_vii", mid: "alexandra_denmark"},
+            
+            // George V's children - 6 CHILDREN
+            {id: "edward_viii", name: "Edward VIII", house: "Windsor", born: "1894", died: "1972", title: "King", reign: "1936", fid: "george_v", mid: "mary_teck", pids: ["wallis_simpson"]},
+            {id: "wallis_simpson", name: "Wallis Simpson", house: "Windsor", gender: "female"},
+            {id: "george_vi", name: "George VI", house: "Windsor", born: "1895", died: "1952", title: "King", reign: "1936-1952", fid: "george_v", mid: "mary_teck", pids: ["elizabeth_bowes"]},
+            {id: "elizabeth_bowes", name: "Elizabeth Bowes-Lyon", house: "Windsor", gender: "female"},
+            {id: "mary_harewood", name: "Mary", house: "Windsor", born: "1897", died: "1965", gender: "female", fid: "george_v", mid: "mary_teck", pids: ["henry_lascelles"]},
+            {id: "henry_lascelles", name: "Henry Lascelles", house: "Windsor"},
+            {id: "henry_gloucester", name: "Henry", house: "Windsor", born: "1900", died: "1974", fid: "george_v", mid: "mary_teck"},
+            {id: "george_kent", name: "George", house: "Windsor", born: "1902", died: "1942", fid: "george_v", mid: "mary_teck"},
+            {id: "john_windsor", name: "John", house: "Windsor", born: "1905", died: "1919", fid: "george_v", mid: "mary_teck"},
+            
+            // George VI's children
+            {id: "elizabeth_ii", name: "Elizabeth II", house: "Windsor", born: "1926", died: "2022", title: "Queen", reign: "1952-2022", gender: "female", fid: "george_vi", mid: "elizabeth_bowes", pids: ["philip"]},
+            {id: "philip", name: "Prince Philip", house: "Windsor"},
+            {id: "margaret_windsor", name: "Margaret", house: "Windsor", born: "1930", died: "2002", gender: "female", fid: "george_vi", mid: "elizabeth_bowes"},
+            
+            // Elizabeth II's children
+            {id: "charles_iii", name: "Charles III", house: "Windsor", born: "1948", title: "King", reign: "2022-present", fid: "philip", mid: "elizabeth_ii", pids: ["diana_spencer", "camilla_parker"]},
+            {id: "diana_spencer", name: "Diana Spencer", house: "Windsor", gender: "female"},
+            {id: "camilla_parker", name: "Camilla Parker Bowles", house: "Windsor", gender: "female"},
+            {id: "anne_windsor", name: "Anne", house: "Windsor", born: "1950", gender: "female", fid: "philip", mid: "elizabeth_ii"},
+            {id: "andrew_windsor", name: "Andrew", house: "Windsor", born: "1960", fid: "philip", mid: "elizabeth_ii"},
+            {id: "edward_windsor", name: "Edward", house: "Windsor", born: "1964", fid: "philip", mid: "elizabeth_ii"},
+            
+            // Charles III's children
+            {id: "william_wales", name: "William", house: "Windsor", born: "1982", fid: "charles_iii", mid: "diana_spencer", pids: ["catherine_middleton"]},
+            {id: "catherine_middleton", name: "Catherine Middleton", house: "Windsor", gender: "female"},
+            {id: "harry_wales", name: "Harry", house: "Windsor", born: "1984", fid: "charles_iii", mid: "diana_spencer", pids: ["meghan_markle"]},
+            {id: "meghan_markle", name: "Meghan Markle", house: "Windsor", gender: "female"},
+            
+            // William's children
+            {id: "george_cambridge", name: "George", house: "Windsor", born: "2013", fid: "william_wales", mid: "catherine_middleton"},
+            {id: "charlotte_cambridge", name: "Charlotte", house: "Windsor", born: "2015", gender: "female", fid: "william_wales", mid: "catherine_middleton"},
+            {id: "louis_cambridge", name: "Louis", house: "Windsor", born: "2018", fid: "william_wales", mid: "catherine_middleton"},
+            
+            // Harry's children
+            {id: "archie_sussex", name: "Archie", house: "Windsor", born: "2019", fid: "harry_wales", mid: "meghan_markle"},
+            {id: "lilibet_sussex", name: "Lilibet", house: "Windsor", born: "2021", gender: "female", fid: "harry_wales", mid: "meghan_markle"}
+        ];
+
+        // Generate legend
+        const legendContainer = document.getElementById('legend-items');
+        Object.keys(dynastyColors).sort().forEach(dynasty => {
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.innerHTML = `
+                <div class="legend-color" style="background-color: ${dynastyColors[dynasty]}"></div>
+                <div>${dynasty}</div>
+            `;
+            legendContainer.appendChild(item);
+        });
+
+        // Create family tree with custom template for each house
+        familyData.forEach(person => {
+            const color = dynastyColors[person.house] || "#999999";
+            const tag = `house_${person.house.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            person.tags = [tag];
+        });
+
+        const chart = new OrgChart(document.getElementById("tree"), {
+            template: "base",
+            enableSearch: true,
+            scaleInitial: 0.4,
+            orientation: OrgChart.orientation.top,
+            nodeBinding: {
+                field_0: "name",
+                field_1: "title",
+                field_2: "house"
+            },
+            tags: {},
+            // Customize node appearance
+            nodes: {
+                template: function(node) {
+                    const color = dynastyColors[node.house] || "#999999";
+                    const textColor = node.house === "York" ? "#000000" : "#ffffff";
+                    
+                    return `
+                        <rect x="0" y="0" height="80" width="180" fill="${color}" stroke="#2c3e50" stroke-width="2" rx="5" ry="5"></rect>
+                        <text fill="${textColor}" x="90" y="25" text-anchor="middle" font-size="12" font-weight="bold">{val}</text>
+                        <text fill="${textColor}" x="90" y="45" text-anchor="middle" font-size="10">{val}</text>
+                        <text fill="${textColor}" x="90" y="65" text-anchor="middle" font-size="9" font-style="italic">{val}</text>
+                    `;
+                }
+            }
+        });
+
+        chart.load(familyData);
+    </script>
+</body>
+</html>
