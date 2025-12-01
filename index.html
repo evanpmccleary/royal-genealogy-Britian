@@ -113,6 +113,586 @@
 
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script>
+    // -------- PERSON DATA (same as last file) ----------------------------------
+    const people = {
+      william1: {
+        id: "william1",
+        name: "William I",
+        nicknames: [
+          "William the Conqueror",
+          "William the Bastard",
+          "William I of England",
+          "Duke William II of Normandy",
+          "Guillaume le Conquérant",
+          "William of Normandy"
+        ],
+        birth: "c. 1028",
+        death: "9 September 1087",
+        parents: ["Robert I of Normandy", "Herleva"],
+        spouses: ["Matilda of Flanders"],
+        children: [
+          "Robert Curthose",
+          "Richard",
+          "William II",
+          "Henry I",
+          "Cecilia",
+          "Adeliza (Adelaide)",
+          "Matilda",
+          "Constance",
+          "Adela",
+          "Agatha"
+        ],
+        titles: [
+          "King of England (1066–1087)",
+          "Duke of Normandy (1035–1087)"
+        ],
+        house: "Normandy",
+        bio: "William I conquered England in 1066 and established Norman rule, reshaping English governance and landholding.",
+        wikipedia: "https://en.wikipedia.org/wiki/William_the_Conqueror",
+        certainty: 1
+      },
+      matildaFlanders: {
+        id: "matildaFlanders",
+        name: "Matilda of Flanders",
+        nicknames: [],
+        birth: "c. 1031",
+        death: "2 November 1083",
+        parents: ["Baldwin V, Count of Flanders", "Adela of France"],
+        spouses: ["William I"],
+        children: [
+          "Robert Curthose",
+          "Richard",
+          "William II",
+          "Henry I",
+          "Cecilia",
+          "Adeliza (Adelaide)",
+          "Matilda",
+          "Constance",
+          "Adela",
+          "Agatha"
+        ],
+        titles: ["Queen consort of England"],
+        house: "Flanders",
+        bio: "Matilda of Flanders was queen consort of England as the wife of William I and played a key political role in Normandy and England.",
+        wikipedia: "https://en.wikipedia.org/wiki/Matilda_of_Flanders",
+        certainty: 1
+      },
+
+      robert: {
+        id: "robert",
+        name: "Robert Curthose",
+        nicknames: [],
+        birth: "c. 1050",
+        death: "3 February 1134",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: ["Sibylla of Conversano"],
+        children: ["William Clito"],
+        titles: ["Duke of Normandy (1087–1106)"],
+        house: "Normandy",
+        bio: "Robert Curthose was the eldest son of William I and duke of Normandy.",
+        wikipedia: "https://en.wikipedia.org/wiki/Robert_Curthose",
+        certainty: 1
+      },
+      richard: {
+        id: "richard",
+        name: "Richard",
+        nicknames: [],
+        birth: "c. 1054",
+        death: "c. 1070",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: [],
+        children: [],
+        titles: [],
+        house: "Normandy",
+        bio: "Richard of Normandy was the second son of William I and died in a hunting accident in the New Forest.",
+        wikipedia: "https://en.wikipedia.org/wiki/Richard_(son_of_William_the_Conqueror)",
+        certainty: 1
+      },
+      william2: {
+        id: "william2",
+        name: "William II",
+        nicknames: ["William Rufus"],
+        birth: "c. 1056",
+        death: "2 August 1100",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: [],
+        children: [],
+        titles: ["King of England (1087–1100)"],
+        house: "Normandy",
+        bio: "William II, called Rufus, was king of England after William I and died in a mysterious hunting accident.",
+        wikipedia: "https://en.wikipedia.org/wiki/William_II_of_England",
+        certainty: 1
+      },
+      henry1: {
+        id: "henry1",
+        name: "Henry I",
+        nicknames: ["Henry Beauclerc"],
+        birth: "c. 1068",
+        death: "1 December 1135",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: ["Matilda of Scotland", "Adeliza of Louvain"],
+        children: [],
+        titles: ["King of England (1100–1135)", "Duke of Normandy (1106–1135)"],
+        house: "Normandy",
+        bio: "Henry I was the youngest son of William I and ruled England and Normandy, noted for administrative reforms.",
+        wikipedia: "https://en.wikipedia.org/wiki/Henry_I_of_England",
+        certainty: 1
+      },
+      cecilia: {
+        id: "cecilia",
+        name: "Cecilia",
+        nicknames: [],
+        birth: "c. 1056",
+        death: "30 July 1126",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: [],
+        children: [],
+        titles: ["Abbess of Holy Trinity, Caen"],
+        house: "Normandy",
+        bio: "Cecilia of Normandy was a daughter of William I who became abbess of Sainte-Trinité in Caen.",
+        wikipedia: "https://en.wikipedia.org/wiki/Cecilia_of_Normandy",
+        certainty: 1
+      },
+      adelizaDaughter: {
+        id: "adelizaDaughter",
+        name: "Adeliza (Adelaide)",
+        nicknames: ["Adelaide of Normandy"],
+        birth: "c. 1050–1052",
+        death: "c. 1120",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: ["Stephen, Count of Aumale"],
+        children: [],
+        titles: [],
+        house: "Normandy",
+        bio: "Adelaide of Normandy, sometimes called Adeliza, was a daughter of William I and wife of Stephen, Count of Aumale.",
+        wikipedia: "https://en.wikipedia.org/wiki/Adelaide_of_Normandy",
+        certainty: 2
+      },
+      matildaDaughter: {
+        id: "matildaDaughter",
+        name: "Matilda",
+        nicknames: [],
+        birth: "c. 1061?",
+        death: "c. 1086?",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: [],
+        children: [],
+        titles: [],
+        house: "Normandy",
+        bio: "Matilda was a daughter of William I; little is known and she likely died unmarried.",
+        wikipedia: "",
+        certainty: 3
+      },
+      constance: {
+        id: "constance",
+        name: "Constance",
+        nicknames: [],
+        birth: "c. 1061–1062",
+        death: "13 August 1090",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: ["Alan IV, Duke of Brittany"],
+        children: [],
+        titles: [],
+        house: "Normandy",
+        bio: "Constance was a daughter of William I and wife of Alan IV, duke of Brittany.",
+        wikipedia: "https://en.wikipedia.org/wiki/Constance_of_Normandy",
+        certainty: 1
+      },
+      adelaDaughter: {
+        id: "adelaDaughter",
+        name: "Adela",
+        nicknames: ["Adela of Normandy"],
+        birth: "c. 1067",
+        death: "8 March 1137",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: ["Stephen, Count of Blois"],
+        children: [],
+        titles: [],
+        house: "Normandy",
+        bio: "Adela of Normandy was a daughter of William I and mother of King Stephen of England.",
+        wikipedia: "https://en.wikipedia.org/wiki/Adela_of_Normandy",
+        certainty: 1
+      },
+      agatha: {
+        id: "agatha",
+        name: "Agatha",
+        nicknames: [],
+        birth: "c. 1064",
+        death: "c. 1074",
+        parents: ["William I", "Matilda of Flanders"],
+        spouses: [],
+        children: [],
+        titles: [],
+        house: "Normandy",
+        bio: "Agatha of Normandy was a daughter of William I, reportedly betrothed to several princes but died young.",
+        wikipedia: "",
+        certainty: 3
+      },
+
+      sibylla: {
+        id: "sibylla",
+        name: "Sibylla of Conversano",
+        nicknames: [],
+        birth: "c. 1080",
+        death: "18 March 1103",
+        parents: ["Geoffrey, Count of Conversano", "Sichelgaita of Moulins"],
+        spouses: ["Robert Curthose"],
+        children: ["William Clito"],
+        titles: ["Duchess consort of Normandy"],
+        house: "Hauteville",
+        bio: "Sibylla of Conversano was a wealthy Norman heiress and duchess of Normandy by marriage to Robert Curthose.",
+        wikipedia: "https://en.wikipedia.org/wiki/Sibylla_of_Conversano",
+        certainty: 1
+      },
+      matildaScot: {
+        id: "matildaScot",
+        name: "Matilda of Scotland",
+        nicknames: ["Edith"],
+        birth: "1080",
+        death: "1 May 1118",
+        parents: ["Malcolm III of Scotland", "Margaret of Wessex"],
+        spouses: ["Henry I"],
+        children: [],
+        titles: ["Queen consort of England"],
+        house: "Dunkeld",
+        bio: "Matilda of Scotland was the first wife of Henry I and queen consort of England, daughter of Malcolm III and Margaret of Wessex.",
+        wikipedia: "https://en.wikipedia.org/wiki/Matilda_of_Scotland",
+        certainty: 1
+      },
+      adelizaLouvain: {
+        id: "adelizaLouvain",
+        name: "Adeliza of Louvain",
+        nicknames: [],
+        birth: "c. 1103",
+        death: "March/April 1151",
+        parents: ["Godfrey I, Count of Louvain", "Ida of Chiny"],
+        spouses: ["Henry I"],
+        children: [],
+        titles: ["Queen consort of England"],
+        house: "Reginar",
+        bio: "Adeliza of Louvain was the second wife of Henry I and queen consort of England, famed for her beauty.",
+        wikipedia: "https://en.wikipedia.org/wiki/Adeliza_of_Louvain",
+        certainty: 1
+      },
+      stephenAumale: {
+        id: "stephenAumale",
+        name: "Stephen, Count of Aumale",
+        nicknames: [],
+        birth: "c. 1070",
+        death: "c. 1127",
+        parents: ["Odo, Count of Champagne", "Adelaide of Normandy"],
+        spouses: ["Adeliza (Adelaide)"],
+        children: [],
+        titles: ["Count of Aumale"],
+        house: "Champagne / Aumale",
+        bio: "Stephen of Aumale was the only son of Odo of Champagne and Adelaide of Normandy, and a one-time claimant to the English throne.",
+        wikipedia: "https://en.wikipedia.org/wiki/Stephen_of_Aumale",
+        certainty: 1
+      },
+      alanIV: {
+        id: "alanIV",
+        name: "Alan IV, Duke of Brittany",
+        nicknames: ["Alan Fergant"],
+        birth: "c. 1063",
+        death: "13 October 1119",
+        parents: ["Hoël II of Cornouaille", "Hawise, Duchess of Brittany"],
+        spouses: ["Constance"],
+        children: [],
+        titles: ["Duke of Brittany"],
+        house: "Cornouaille",
+        bio: "Alan IV, called Fergant, was duke of Brittany and husband of Constance of Normandy.",
+        wikipedia: "https://en.wikipedia.org/wiki/Alan_IV,_Duke_of_Brittany",
+        certainty: 1
+      },
+      stephenBlois: {
+        id: "stephenBlois",
+        name: "Stephen, Count of Blois",
+        nicknames: [],
+        birth: "c. 1045",
+        death: "19 May 1102",
+        parents: ["Theobald III, Count of Blois", "Gersent of Le Mans"],
+        spouses: ["Adela"],
+        children: [],
+        titles: ["Count of Blois"],
+        house: "Blois",
+        bio: "Stephen, count of Blois, was a crusader and husband of Adela of Normandy.",
+        wikipedia: "https://en.wikipedia.org/wiki/Stephen,_Count_of_Blois",
+        certainty: 1
+      }
+    };
+
+    // ---------- LAYOUT: cluster per child -------------------------------------
+
+    const nodeWidth = 150;
+    const nodeHeight = 38;
+    const verticalGap = 140;
+    const innerGap = 40;   // inside a family cluster (between child and spouses)
+    const clusterGap = 140; // between different children/families
+
+    const topY = 80;
+    const childrenY = topY + verticalGap;
+
+    // define clusters: each child + array of spouse keys (in people)
+    const childClusters = [
+      { id: "robert",        spouses: ["sibylla"] },
+      { id: "richard",       spouses: [] },
+      { id: "william2",      spouses: [] },
+      { id: "henry1",        spouses: ["matildaScot", "adelizaLouvain"] },
+      { id: "cecilia",       spouses: [] },
+      { id: "adelizaDaughter", spouses: ["stephenAumale"] },
+      { id: "matildaDaughter", spouses: [] },
+      { id: "constance",     spouses: ["alanIV"] },
+      { id: "adelaDaughter", spouses: ["stephenBlois"] },
+      { id: "agatha",        spouses: [] }
+    ];
+
+    const nodes = [];
+    const linksParent = [];
+    const linksMarriage = [];
+
+    // build child+spouse clusters, left-to-right
+    let currentX = 0;
+    childClusters.forEach(cluster => {
+      const child = people[cluster.id];
+      const spouses = cluster.spouses || [];
+      const count = 1 + spouses.length;
+      const clusterWidth = count * nodeWidth + (count - 1) * innerGap;
+
+      // place child on the left of their own cluster
+      const childX = currentX;
+      nodes.push({
+        id: cluster.id,
+        data: child,
+        x: childX,
+        y: childrenY
+      });
+
+      let spouseX = childX + nodeWidth + innerGap;
+      spouses.forEach(spKey => {
+        const sp = people[spKey];
+        nodes.push({
+          id: sp.id,
+          data: sp,
+          x: spouseX,
+          y: childrenY
+        });
+        // marriage link child <-> that spouse
+        linksMarriage.push({
+          source: cluster.id,
+          target: sp.id
+        });
+        spouseX += nodeWidth + innerGap;
+      });
+
+      currentX += clusterWidth + clusterGap;
+    });
+
+    // center all child clusters in the viewport
+    const container = document.getElementById("chart-container");
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    let minChildX = Infinity;
+    let maxChildX = -Infinity;
+    nodes.forEach(n => {
+      if (n.y === childrenY) {
+        if (n.x < minChildX) minChildX = n.x;
+        if (n.x > maxChildX) maxChildX = n.x;
+      }
+    });
+    const totalWidth = maxChildX - minChildX + nodeWidth;
+    const offsetX = (width - totalWidth) / 2 - minChildX;
+
+    nodes.forEach(n => {
+      n.x += offsetX;
+    });
+    minChildX += offsetX;
+    maxChildX += offsetX;
+
+    // add William & Matilda above, centered over children
+    const centerX = (minChildX + maxChildX) / 2;
+    const williamNode = {
+      id: "william1",
+      data: people.william1,
+      x: centerX - nodeWidth - 40,
+      y: topY
+    };
+    const matildaNode = {
+      id: "matildaFlanders",
+      data: people.matildaFlanders,
+      x: centerX + 40,
+      y: topY
+    };
+    nodes.push(williamNode, matildaNode);
+
+    // marriage between William & Matilda
+    linksMarriage.push({
+      source: "william1",
+      target: "matildaFlanders"
+    });
+
+    // parent-child links from midpoint between William & Matilda
+    const marriageMid = {
+      x: (williamNode.x + matildaNode.x + nodeWidth) / 2,
+      y: williamNode.y + nodeHeight / 2
+    };
+
+    childClusters.forEach(cluster => {
+      const childNode = nodes.find(n => n.id === cluster.id);
+      linksParent.push({
+        mid: marriageMid,
+        target: childNode
+      });
+    });
+
+    // ---------- D3 RENDER ------------------------------------------------------
+
+    const svg = d3.select("#chart-container")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const g = svg.append("g");
+
+    const zoom = d3.zoom()
+      .scaleExtent([0.4, 2.5])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      });
+
+    svg.call(zoom);
+
+    g.selectAll(".link-parent")
+      .data(linksParent)
+      .enter()
+      .append("path")
+      .attr("class", "link-parent")
+      .attr("d", d => {
+        const x1 = d.mid.x;
+        const y1 = d.mid.y + 10;
+        const x2 = d.target.x + nodeWidth / 2;
+        const y2 = d.target.y - nodeHeight / 2;
+        const midY = (y1 + y2) / 2;
+        return `M${x1},${y1} L${x1},${midY} L${x2},${midY} L${x2},${y2}`;
+      });
+
+    g.selectAll(".link-marriage")
+      .data(linksMarriage)
+      .enter()
+      .append("line")
+      .attr("class", "link-marriage")
+      .attr("x1", d => {
+        const n = nodes.find(n => n.id === d.source);
+        return n.x + nodeWidth;
+      })
+      .attr("y1", d => {
+        const n = nodes.find(n => n.id === d.source);
+        return n.y + nodeHeight / 2;
+      })
+      .attr("x2", d => {
+        const n = nodes.find(n => n.id === d.target);
+        return n.x;
+      })
+      .attr("y2", d => {
+        const n = nodes.find(n => n.id === d.target);
+        return n.y + nodeHeight / 2;
+      });
+
+    const nodeGroup = g.selectAll(".node")
+      .data(nodes)
+      .enter()
+      .append("g")
+      .attr("class", "node")
+      .attr("transform", d => `translate(${d.x},${d.y})`)
+      .on("click", (event, d) => {
+        showPersonCard(d.data);
+      });
+
+    nodeGroup.append("rect")
+      .attr("class", "node-rect")
+      .attr("width", nodeWidth)
+      .attr("height", nodeHeight);
+
+    nodeGroup.append("text")
+      .attr("class", "node-text")
+      .attr("x", nodeWidth / 2)
+      .attr("y", nodeHeight / 2)
+      .text(d => d.data.name);
+
+    // ---------- CARD LOGIC -----------------------------------------------------
+
+    const overlay = document.getElementById("overlay");
+    const card = document.getElementById("person-card");
+    const cardContent = document.getElementById("person-card-content");
+    const cardClose = card.querySelector(".close-btn");
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, s => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[s]));
+    }
+
+    function formatList(list) {
+      if (!list || !list.length) return "None recorded";
+      return list.join(", ");
+    }
+
+    function showPersonCard(person) {
+      const nick = person.nicknames && person.nicknames.length
+        ? person.nicknames.join(", ")
+        : "None recorded";
+      const parents = person.parents && person.parents.length
+        ? person.parents.join(", ")
+        : "Unknown";
+      const spouses = formatList(person.spouses);
+      const children = formatList(person.children);
+      const titles = formatList(person.titles);
+
+      const certaintyMap = {
+        1: "1 (Confirmed)",
+        2: "2 (Uncertain)",
+        3: "3 (Speculative)"
+      };
+
+      const wiki = person.wikipedia && person.wikipedia.trim().length
+        ? '<a href="' + escapeHtml(person.wikipedia) + '" target="_blank" rel="noopener">Open article</a>'
+        : "None";
+
+      const html = `
+        <h2>${escapeHtml(person.name)}</h2>
+        <div class="value"><span class="label">Nicknames:</span> ${escapeHtml(nick)}</div>
+        <div class="value"><span class="label">Birth:</span> ${escapeHtml(person.birth || "Unknown")}</div>
+        <div class="value"><span class="label">Death:</span> ${escapeHtml(person.death || "Unknown")}</div>
+        <div class="value"><span class="label">Parents:</span> ${escapeHtml(parents)}</div>
+        <div class="value"><span class="label">Spouses:</span> ${escapeHtml(spouses)}</div>
+        <div class="value"><span class="label">Children:</span> ${escapeHtml(children)}</div>
+        <div class="value"><span class="label">Titles:</span> ${escapeHtml(titles)}</div>
+        <div class="value"><span class="label">House:</span> ${escapeHtml(person.house || "Unknown")}</div>
+        <div class="value"><span class="label">Bio:</span><br>${escapeHtml(person.bio || "No bio yet.")}</div>
+        <div class="value"><span class="label">Wikipedia:</span> ${wiki}</div>
+        <div class="value"><span class="label">Certainty Score:</span> ${escapeHtml(certaintyMap[person.certainty] || String(person.certainty || ""))}</div>
+      `;
+
+      cardContent.innerHTML = html;
+      overlay.style.display = "block";
+      card.style.display = "block";
+    }
+
+    function hidePersonCard() {
+      overlay.style.display = "none";
+      card.style.display = "none";
+    }
+
+    overlay.addEventListener("click", hidePersonCard);
+    cardClose.addEventListener("click", hidePersonCard);
+  </script>
+</body>
+</html>
+
     // -------- PERSON DATA (cards) ---------------------------------------------
 
     const people = {
