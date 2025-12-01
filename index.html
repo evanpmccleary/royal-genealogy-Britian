@@ -199,16 +199,16 @@
         id: "richard",
         name: "Richard",
         nicknames: [],
-        birth: "c. 1055?",
-        death: "c. 1075?",
+        birth: "c. 1054",
+        death: "c. 1070",
         parents: ["William I", "Matilda of Flanders"],
         spouses: [],
         children: [],
         titles: [],
         house: "Normandy",
-        bio: "Richard was a son of William I who died young in a hunting accident.",
-        wikipedia: "https://en.wikipedia.org/wiki/William_the_Conqueror#Family",
-        certainty: 2
+        bio: "Richard of Normandy was the second son of William I and died in a hunting accident in the New Forest.",
+        wikipedia: "https://en.wikipedia.org/wiki/Richard_(son_of_William_the_Conqueror)",
+        certainty: 1
       },
       william2: {
         id: "william2",
@@ -245,13 +245,13 @@
         name: "Cecilia",
         nicknames: [],
         birth: "c. 1056",
-        death: "13 July 1126",
+        death: "30 July 1126",
         parents: ["William I", "Matilda of Flanders"],
         spouses: [],
         children: [],
-        titles: [],
+        titles: ["Abbess of Holy Trinity, Caen"],
         house: "Normandy",
-        bio: "Cecilia was a daughter of William I who became a nun and abbess at Caen.",
+        bio: "Cecilia of Normandy was a daughter of William I who became abbess of Sainte-Trinité in Caen.",
         wikipedia: "https://en.wikipedia.org/wiki/Cecilia_of_Normandy",
         certainty: 1
       },
@@ -274,22 +274,22 @@
         id: "matildaDaughter",
         name: "Matilda",
         nicknames: [],
-        birth: "unknown",
-        death: "before 1113?",
+        birth: "c. 1061?",
+        death: "c. 1086?",
         parents: ["William I", "Matilda of Flanders"],
         spouses: [],
         children: [],
         titles: [],
         house: "Normandy",
         bio: "Matilda was a daughter of William I; little is known and she likely died unmarried.",
-        wikipedia: "https://en.wikipedia.org/wiki/William_the_Conqueror#Family",
+        wikipedia: "",
         certainty: 3
       },
       constance: {
         id: "constance",
         name: "Constance",
         nicknames: [],
-        birth: "c. 1061",
+        birth: "c. 1061–1062",
         death: "13 August 1090",
         parents: ["William I", "Matilda of Flanders"],
         spouses: ["Alan IV, Duke of Brittany"],
@@ -319,15 +319,15 @@
         id: "agatha",
         name: "Agatha",
         nicknames: [],
-        birth: "c. 1064?",
-        death: "c. 1080?",
+        birth: "c. 1064",
+        death: "c. 1074",
         parents: ["William I", "Matilda of Flanders"],
         spouses: [],
         children: [],
         titles: [],
         house: "Normandy",
-        bio: "Agatha was a daughter of William I, reportedly betrothed to several princes but died young.",
-        wikipedia: "https://en.wikipedia.org/wiki/William_the_Conqueror#Family",
+        bio: "Agatha of Normandy was a daughter of William I, reportedly betrothed to several princes but died young.",
+        wikipedia: "",
         certainty: 3
       },
 
@@ -426,10 +426,10 @@
 
     // ---------- LAYOUT ---------------------------------------------------------
 
-    const nodeWidth = 140;
+    const nodeWidth = 150;
     const nodeHeight = 38;
-    const verticalGap = 120;
-    const horizontalGap = 170; // more space between siblings
+    const verticalGap = 140;
+    const horizontalGap = 220;
 
     const childrenOrder = [
       "robert",
@@ -477,8 +477,7 @@
       y: topY
     });
 
-    // spouses for children, keeping them on same row but with larger offsets
-    function addSpouseNode(childId, spouseKey, offset = 180) {
+    function addSpouseNode(childId, spouseKey, offset = 220) {
       const childNode = nodes.find(n => n.id === childId);
       if (!childNode) return;
       const spouse = people[spouseKey];
@@ -492,7 +491,7 @@
 
     addSpouseNode("robert", "sibylla");
     addSpouseNode("henry1", "matildaScot");
-    addSpouseNode("henry1", "adelizaLouvain", 360); // second wife further away
+    addSpouseNode("henry1", "adelizaLouvain", 440); // second wife further away
     addSpouseNode("adelizaDaughter", "stephenAumale");
     addSpouseNode("constance", "alanIV");
     addSpouseNode("adelaDaughter", "stephenBlois");
@@ -551,7 +550,7 @@
     const g = svg.append("g");
 
     const zoom = d3.zoom()
-      .scaleExtent([0.5, 2.5])
+      .scaleExtent([0.4, 2.5])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
       });
@@ -654,6 +653,10 @@
         3: "3 (Speculative)"
       };
 
+      const wiki = person.wikipedia && person.wikipedia.trim().length
+        ? '<a href="' + escapeHtml(person.wikipedia) + '" target="_blank" rel="noopener">Open article</a>'
+        : "None";
+
       const html = `
         <h2>${escapeHtml(person.name)}</h2>
         <div class="value"><span class="label">Nicknames:</span> ${escapeHtml(nick)}</div>
@@ -665,11 +668,7 @@
         <div class="value"><span class="label">Titles:</span> ${escapeHtml(titles)}</div>
         <div class="value"><span class="label">House:</span> ${escapeHtml(person.house || "Unknown")}</div>
         <div class="value"><span class="label">Bio:</span><br>${escapeHtml(person.bio || "No bio yet.")}</div>
-        <div class="value"><span class="label">Wikipedia:</span> ${
-          person.wikipedia
-            ? '<a href="' + escapeHtml(person.wikipedia) + '" target="_blank" rel="noopener">Open article</a>'
-            : "None"
-        }</div>
+        <div class="value"><span class="label">Wikipedia:</span> ${wiki}</div>
         <div class="value"><span class="label">Certainty Score:</span> ${escapeHtml(certaintyMap[person.certainty] || String(person.certainty || ""))}</div>
       `;
 
