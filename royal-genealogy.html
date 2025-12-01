@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>British Royal Family - Interactive Genealogy</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Georgia', serif; background: #f5f0e8; overflow: hidden; }
+        
+        #header {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: #2c1810; color: #f5f0e8; padding: 15px 30px;
+            z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        #header h1 { font-size: 24px; margin-bottom: 5px; }
+        #header .subtitle { font-size: 14px; opacity: 0.8; }
+        
+        #controls {
+            position: fixed; top: 80px; left: 20px;
+            background: white; padding: 20px; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; max-width: 300px;
+        }
+        #controls h3 { margin-bottom: 15px; color: #2c1810; }
+        #search-box {
+            width: 100%; padding: 10px; border: 2px solid #8B4513;
+            border-radius: 4px; font-size: 14px; margin-bottom: 15px;
+        }
+        button {
+            background: #8B4513; color: white; border: none;
+            padding: 8px 15px; border-radius: 4px; cursor: pointer;
+            margin-right: 5px; margin-bottom: 5px;
+        }
+        button:hover { background: #6d3410; }
+        
+        #legend {
+            position: fixed; bottom: 20px; left: 20px;
+            background: white; padding: 15px; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100;
+        }
+        .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
+        .legend-color { width: 30px; height: 20px; margin-right: 10px; border-radius: 3px; border: 1px solid #333; }
+        
+        #tree-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        .node rect { stroke: #333; stroke-width: 2px; cursor: pointer; }
+        .node:hover rect { stroke: #FFD700; stroke-width: 3px; }
+        .node text { font-family: 'Georgia', serif; font-size: 12px; fill: white; pointer-events: none; text-anchor: middle; }
+        .node .name { font-weight: bold; font-size: 13px; }
+        .node .dates { font-size: 10px; opacity: 0.9; }
+        
+        .link { fill: none; stroke: #8B4513; stroke-width: 2px; }
+        .link.parent { stroke: #8B4513; }
+        .link.spouse { stroke: #DC143C; stroke-dasharray: 5, 5; }
+        
+        #person-details {
+            position: fixed; top: 80px; right: 20px; width: 350px;
+            max-height: 80vh; overflow-y: auto; background: white;
+            padding: 25px; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; display: none;
+        }
+        #person-details.visible { display: block; }
+        #person-details h2 { color: #2c1810; margin-bottom: 15px; font-size: 22px; }
+        #person-details .detail-row { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0; }
+        #person-details .detail-label { font-weight: bold; color: #8B4513; margin-bottom: 5px; }
+        #person-details .detail-value { color: #333; }
+        .close-btn {
+            position: absolute; top: 15px; right: 15px; background: transparent;
+            color: #8B4513; font-size: 24px; border: none; cursor: pointer;
+            padding: 0; width: 30px; height: 30px;
+        }
+        .close-btn:hover { color: #DC143C; }
+        
+        #instructions {
+            position: fixed; bottom: 20px; right: 20px;
+            background: rgba(255, 255, 255, 0.95); padding: 15px;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 13px; max-width: 250px;
+        }
+        #instructions strong { color: #8B4513; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>European Genealogy Database</h1>
+        <div class="subtitle">British Royal Family • Interactive Family Tree</div>
+    </div>
+    
+    <div id="controls">
+        <h3>Search & Navigate</h3>
+        <input type="text" id="search-box" placeholder="Search for a person...">
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #2c1810;">Quick Navigation:</label>
+            <button onclick="centerOnPerson('william-i-the-conqueror')">William the Conqueror</button>
+            <button onclick="centerOnPerson('elizabeth-ii')">Elizabeth II</button>
+            <button onclick="centerOnPerson('charles-iii')">Charles III</button>
+        </div>
+        <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #2c1810;">View Controls:</label>
+            <button onclick="resetZoom()">Reset View</button>
+            <button onclick="fitToScreen()">Fit All</button>
+        </div>
+    </div>
+    
+    <div id="legend">
+        <strong style="display: block; margin-bottom: 10px;">Dynasty Colors:</strong>
+        <div class="legend-item"><div class="legend-color" style="background: #4A90E2;"></div><span>Wessex</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #8B4513;"></div><span>Norman</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #DC143C;"></div><span>Plantagenet</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #6A0DAD;"></div><span>Stuart</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #000080;"></div><span>Windsor</span></div>
+    </div>
+    
+    <div id="instructions">
+        <strong>Controls:</strong><br>
+        • <strong>Scroll</strong> to zoom in/out<br>
+        • <strong>Drag</strong> to pan around<br>
+        • <strong>Click</strong> on any person for details
+    </div>
+    
+    <div id="person-details">
+        <button class="close-btn" onclick="closeDetails()">×</button>
+        <div id="details-content"></div>
+    </div>
+    
+    <svg id="tree-container"></svg>
+    
+    <script>
+        // Embedded data - no external files needed
+        const graphData = {
+            "nodes": [
+                {"id": "cerdic-of-wessex", "name": "Cerdic of Wessex", "birth": 467, "death": 534, "titles": ["King of Wessex"], "dynasty": "wessex", "reign": "519-534", "color": "#4A90E2"},
+                {"id": "william-i-the-conqueror", "name": "William I", "birth": 1028, "death": 1087, "titles": ["King of England", "Duke of Normandy"], "dynasty": "norman", "reign": "1066-1087", "color": "#8B4513"},
+                {"id": "matilda-of-flanders", "name": "Matilda of Flanders", "birth": 1031, "death": 1083, "titles": ["Queen of England"], "dynasty": "norman", "reign": null, "color": "#8B4513"},
+                {"id": "robert-curthose", "name": "Robert Curthose", "birth": 1051, "death": 1134, "titles": ["Duke of Normandy"], "dynasty": "norman", "reign": null, "color": "#8B4513"},
+                {"id": "william-ii-rufus", "name": "William II", "birth": 1056, "death": 1100, "titles": ["King of England"], "dynasty": "norman", "reign": "1087-1100", "color": "#8B4513"},
+                {"id": "henry-i", "name": "Henry I", "birth": 1068, "death": 1135, "titles": ["King of England"], "dynasty": "norman", "reign": "1100-1135", "color": "#8B4513"},
+                {"id": "elizabeth-ii", "name": "Elizabeth II", "birth": 1926, "death": 2022, "titles": ["Queen of the United Kingdom"], "dynasty": "windsor", "reign": "1952-2022", "color": "#000080"},
+                {"id": "charles-iii", "name": "Charles III", "birth": 1948, "death": null, "titles": ["King of the United Kingdom"], "dynasty": "windsor", "reign": "2022-", "color": "#000080"}
+            ],
+            "links": [
+                {"source": "william-i-the-conqueror", "target": "robert-curthose", "type": "parent"},
+                {"source": "matilda-of-flanders", "target": "robert-curthose", "type": "parent"},
+                {"source": "william-i-the-conqueror", "target": "william-ii-rufus", "type": "parent"},
+                {"source": "matilda-of-flanders", "target": "william-ii-rufus", "type": "parent"},
+                {"source": "william-i-the-conqueror", "target": "henry-i", "type": "parent"},
+                {"source": "matilda-of-flanders", "target": "henry-i", "type": "parent"},
+                {"source": "william-i-the-conqueror", "target": "matilda-of-flanders", "type": "spouse"},
+                {"source": "elizabeth-ii", "target": "charles-iii", "type": "parent"}
+            ]
+        };
+        
+        let svg, g, zoom, simulation;
+        
+        function initializeVisualization() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            svg = d3.select('#tree-container').attr('width', width).attr('height', height);
+            zoom = d3.zoom().scaleExtent([0.1, 4]).on('zoom', (event) => { g.attr('transform', event.transform); });
+            svg.call(zoom);
+            g = svg.append('g');
+            
+            simulation = d3.forceSimulation(graphData.nodes)
+                .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(d => d.type === 'spouse' ? 50 : 150))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(60));
+            
+            const link = g.append('g').selectAll('path').data(graphData.links).join('path')
+                .attr('class', d => `link ${d.type}`)
+                .attr('marker-end', d => d.type === 'parent' ? 'url(#arrowhead)' : '');
+            
+            svg.append('defs').append('marker').attr('id', 'arrowhead')
+                .attr('viewBox', '0 -5 10 10').attr('refX', 25).attr('refY', 0)
+                .attr('markerWidth', 6).attr('markerHeight', 6).attr('orient', 'auto')
+                .append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', '#8B4513');
+            
+            const node = g.append('g').selectAll('g').data(graphData.nodes).join('g')
+                .attr('class', 'node')
+                .call(d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended))
+                .on('click', (event, d) => showPersonDetails(d));
+            
+            node.append('rect').attr('width', 120).attr('height', 50).attr('x', -60).attr('y', -25)
+                .attr('rx', 5).attr('fill', d => d.color);
+            
+            node.append('text').attr('class', 'name').attr('y', -5).text(d => d.name);
+            node.append('text').attr('class', 'dates').attr('y', 10)
+                .text(d => { if (d.birth && d.death) return `${d.birth}-${d.death}`; if (d.birth) return `b. ${d.birth}`; return ''; });
+            node.append('text').attr('class', 'dates').attr('y', 22).text(d => d.reign ? `r. ${d.reign}` : '');
+            
+            simulation.on('tick', () => {
+                link.attr('d', d => `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`);
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+            
+            setTimeout(() => fitToScreen(), 1000);
+        }
+        
+        function showPersonDetails(person) {
+            const panel = document.getElementById('person-details');
+            const content = document.getElementById('details-content');
+            const wikiName = person.name.replace(/ /g, '_');
+            const wikiUrl = `https://en.wikipedia.org/wiki/${wikiName}`;
+            
+            let html = `<h2>${person.name}</h2>
+                <div class="detail-row"><div class="detail-label">Born:</div><div class="detail-value">${person.birth || 'Unknown'}</div></div>
+                <div class="detail-row"><div class="detail-label">Died:</div><div class="detail-value">${person.death || 'Living'}</div></div>`;
+            
+            if (person.reign) html += `<div class="detail-row"><div class="detail-label">Reign:</div><div class="detail-value">${person.reign}</div></div>`;
+            html += `<div class="detail-row"><div class="detail-label">Dynasty:</div><div class="detail-value" style="text-transform: capitalize;">${person.dynasty}</div></div>`;
+            
+            if (person.titles && person.titles.length > 0) {
+                html += `<div class="detail-row"><div class="detail-label">Titles:</div><div class="detail-value">${person.titles.join('<br>')}</div></div>`;
+            }
+            
+            html += `<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #8B4513;">
+                <a href="${wikiUrl}" target="_blank" style="display: block; background: #8B4513; color: white; padding: 12px 20px; text-align: center; text-decoration: none; border-radius: 5px; font-weight: bold; margin-bottom: 10px;">📖 Read Full Wikipedia Article</a>
+                <button onclick="centerOnPerson('${person.id}')" style="width: 100%; background: #4A90E2; padding: 10px;">🔍 Center on Family Tree</button></div>`;
+            
+            content.innerHTML = html;
+            panel.classList.add('visible');
+        }
+        
+        function closeDetails() { document.getElementById('person-details').classList.remove('visible'); }
+        
+        function centerOnPerson(personId) {
+            const person = graphData.nodes.find(n => n.id === personId);
+            if (!person) return;
+            const transform = d3.zoomIdentity.translate(window.innerWidth / 2, window.innerHeight / 2).scale(1.5).translate(-person.x, -person.y);
+            svg.transition().duration(750).call(zoom.transform, transform);
+        }
+        
+        function resetZoom() { svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity); }
+        
+        function fitToScreen() {
+            const bounds = g.node().getBBox();
+            const width = window.innerWidth, height = window.innerHeight;
+            const midX = bounds.x + bounds.width / 2, midY = bounds.y + bounds.height / 2;
+            const scale = 0.8 / Math.max(bounds.width / width, bounds.height / height);
+            const transform = d3.zoomIdentity.translate(width / 2, height / 2).scale(scale).translate(-midX, -midY);
+            svg.transition().duration(750).call(zoom.transform, transform);
+        }
+        
+        function dragstarted(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+        
+        document.getElementById('search-box').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (!query) return;
+            const matches = graphData.nodes.filter(n => n.name.toLowerCase().includes(query));
+            if (matches.length > 0) centerOnPerson(matches[0].id);
+        });
+        
+        initializeVisualization();
+    </script>
+</body>
+</html>
